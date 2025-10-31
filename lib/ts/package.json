@@ -1,0 +1,19 @@
+{
+  "name": "ctp.ts",
+  "version": "0.0.1",
+  "description": "Typescript interface for WebCTP",
+  "type": "module",
+  "main": "dist/test.js",
+  "scripts": {
+    "test": "tsx watch src/test.ts"
+  },
+  "author": "tabxx",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^24.9.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "ws": "^8.18.3"
+  }
+}

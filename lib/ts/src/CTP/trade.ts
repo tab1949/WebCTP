@@ -51,6 +51,10 @@ export class Trade {
         if (investorID !== undefined) {
             data.investor_id = investorID;
         }
+        this.ws.send(JSON.stringify({
+            op: "set",
+            data: data
+        }));
     }
 
     public getTradingDay() {

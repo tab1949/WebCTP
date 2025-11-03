@@ -3,9 +3,9 @@
   "version": "0.0.1",
   "description": "Typescript interface for WebCTP",
   "type": "module",
-  "main": "dist/test.js",
+  "main": "dist/test.local.js",
   "scripts": {
-    "test": "tsx watch src/test.ts"
+    "test": "tsx watch src/test.local.ts"
   },
   "author": "tabxx",
   "license": "MIT",

@@ -12,20 +12,24 @@ void TraderHandler::connect(const string& addr, const string& port) {
     performed(0, 0);
 }
 
-bool TraderHandler::setBrokerID(const std::string& broker_id) {
-    if (broker_id.size() > sizeof(broker_id_))
-        return false;
-    std::memset(broker_id_, 0, sizeof(broker_id_));
-    copy(broker_id_, broker_id);
-    return true;
+void TraderHandler::setBrokerID(const std::string& broker_id) {
+    int req = req_id_++;
+    if (broker_id.size() >= sizeof(TThostFtdcBrokerIDType)) {
+        performed(req, -1);
+        return;
+    }
+    broker_id_ = broker_id;
+    performed(req, 0);
 }
 
-bool TraderHandler::setInvestorID(const std::string& investor_id) {
-    if (investor_id.size() > sizeof(investor_id_))
-        return false;
-    std::memset(investor_id_, 0, sizeof(investor_id_));
-    copy(investor_id_, investor_id);
-    return true;
+void TraderHandler::setInvestorID(const std::string& investor_id) {
+    int req = req_id_++;
+    if (investor_id.size() >= sizeof(TThostFtdcInvestorIDType)) {
+        performed(req, -1);
+        return;
+    }
+    investor_id_ = investor_id;
+    performed(req, 0);
 }
 
 void TraderHandler::getTradingDay() {

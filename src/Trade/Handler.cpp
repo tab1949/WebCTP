@@ -61,7 +61,7 @@ void TraderHandler::OnRspAuthenticate(
             {"app_type", pRspAuthenticateField->AppType},
             {"broker_id", pRspAuthenticateField->BrokerID},
             {"user_id", pRspAuthenticateField->UserID},
-            {"user_product_info", pRspAuthenticateField->UserProductInfo}
+            {"user_product_info", u8(pRspAuthenticateField->UserProductInfo)}
         }
     );
 }

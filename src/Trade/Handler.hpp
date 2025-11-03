@@ -38,8 +38,8 @@ public:
     void OnFrontConnected() override;
     void OnFrontDisconnected(int nReason) override;
 
-    bool setBrokerID(const std::string& broker_id);
-    bool setInvestorID(const std::string& investor_id);
+    void setBrokerID(const std::string& broker_id);
+    void setInvestorID(const std::string& investor_id);
 
     void getTradingDay();
 
@@ -145,8 +145,8 @@ private:
     WebSocket* ws_;
     uWS::Loop* loop_;
     std::atomic<int> req_id_;
-    TThostFtdcBrokerIDType broker_id_;
-    TThostFtdcInvestorIDType investor_id_;
+    string broker_id_;
+    string investor_id_;
 
 }; // class TraderHandler
 

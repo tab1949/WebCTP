@@ -143,19 +143,19 @@ export class MarketData {
         }));
     }
 
-    public logout() {
-        if (!this.ws) {
-            throw new Error("WebSocket is not connected");
-            return;
-        }
-        this.ws.send(JSON.stringify({
-            op: "logout",
-            data: {
-                broker_id: this.brokerID,
-                user_id: this.userID
-            }
-        }));
-    }
+    // public logout() {
+    //     if (!this.ws) {
+    //         throw new Error("WebSocket is not connected");
+    //         return;
+    //     }
+    //     this.ws.send(JSON.stringify({
+    //         op: "logout",
+    //         data: {
+    //             broker_id: this.brokerID,
+    //             user_id: this.userID
+    //         }
+    //     }));
+    // }
 
     public subscribe(instruments: string[]) {
         if (!this.ws) {

@@ -102,7 +102,7 @@ void MarketDataHandler::OnRspSubMarketData(
 void MarketDataHandler::OnRspUnSubMarketData(
     CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::SUBSCRIBE, pRspInfo,
+    send(MDMsgCode::UNSUBSCRIBE, pRspInfo,
         pSpecificInstrument? json {
             {"instrument_id", pSpecificInstrument->InstrumentID},
             {"req_id", nRequestID},

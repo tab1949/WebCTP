@@ -41,16 +41,16 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
         return "";
     }},
     {"logout", [](cjr j, mdr md) {
-        if (!j.contains("broker_id"))
-            return "Error: Field \"broker_id\" not found.";
-        if (!j["broker_id"].is_string())
-            return "Error: Field \"broker_id\" type error (expected string).";
-        if (!j.contains("user_id"))
-            return "Error: Field \"user_id\" not found.";
-        if (!j["user_id"].is_string())
-            return "Error: Field \"user_id\" type error (expected string).";
-        md.logout(j["user_id"], j["broker_id"]);
-        return "";
+        // if (!j.contains("broker_id"))
+        //     return "Error: Field \"broker_id\" not found.";
+        // if (!j["broker_id"].is_string())
+        //     return "Error: Field \"broker_id\" type error (expected string).";
+        // if (!j.contains("user_id"))
+        //     return "Error: Field \"user_id\" not found.";
+        // if (!j["user_id"].is_string())
+        //     return "Error: Field \"user_id\" type error (expected string).";
+        // md.logout(j["user_id"], j["broker_id"]);
+        return "Unsupported method";
     }},
     {"subscribe", [](cjr j, mdr md) {
         if (!j.contains("instruments"))

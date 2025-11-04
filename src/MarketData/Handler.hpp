@@ -57,15 +57,16 @@ public:
         CThostFtdcRspUserLoginField *pRspUserLogin, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void logout(const std::string& user_id, const std::string& broker_id) {
-        CThostFtdcUserLogoutField f;
-        clear(&f);
-        copy(f.BrokerID, broker_id);
-        copy(f.UserID, user_id);
-        int req = req_id_++;
-        auto ret = api_->ReqUserLogout(&f, req);
-        performed(req, ret);
-    }
+    // This operation is not supported by CTP
+    // void logout(const std::string& user_id, const std::string& broker_id) {
+        // CThostFtdcUserLogoutField f;
+        // clear(&f);
+        // copy(f.BrokerID, broker_id);
+        // copy(f.UserID, user_id);
+        // int req = req_id_++;
+        // auto ret = api_->ReqUserLogout(&f, req);
+        // performed(req, ret);
+    // }
     void OnRspUserLogout(
         CThostFtdcUserLogoutField *pUserLogout, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;

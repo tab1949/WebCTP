@@ -253,4 +253,22 @@ void TraderHandler::queryOrderByRange(const string& from, const string& to) {
     auto ret = api_->ReqQryOrder(&f, req_id);
     performed(req_id, ret);
 }
+
+void TraderHandler::deleteOrder(const string& exchange, const string& instrument, int delRef, const string& sysID) {
+    CThostFtdcInputOrderActionField f;
+    int req_id = req_id_++;
+    clear(&f);
+    f.ActionFlag = THOST_FTDC_AF_Delete;
+    copy(f.BrokerID, this->broker_id_);
+    copy(f.InvestorID, this->investor_id_);
+    copy(f.UserID, this->investor_id_);
+    copy(f.ExchangeID, exchange);
+    copy(f.InstrumentID, instrument);
+    f.OrderActionRef = delRef;
+    copy(f.OrderSysID, sysID);
+    f.RequestID = req_id;
+    auto ret = api_->ReqOrderAction(&f, req_id);
+    performed(req_id, ret);
+}
+
 } // namespace tabxx

@@ -44,7 +44,10 @@ export enum TradeMsgCode {
     ORDER_INSERT_RETURN_ERROR,
     ORDER_INSERTED,
     ORDER_TRADED,
-    QUERY_ORDER
+    QUERY_ORDER,
+    ORDER_DELETE_ERROR,
+    ORDER_DELETE_RETURN_ERROR,
+    ORDER_DELETED
 }
 
 export const TradeMsgInfo: Record<TradeMsgCode, string> = {
@@ -65,5 +68,8 @@ export const TradeMsgInfo: Record<TradeMsgCode, string> = {
     [TradeMsgCode.ORDER_INSERT_RETURN_ERROR]: "Order Insert Returned Error",
     [TradeMsgCode.ORDER_INSERTED]: "Order Inserted",
     [TradeMsgCode.ORDER_TRADED]: "Order Traded",
-    [TradeMsgCode.QUERY_ORDER]: "Query Order"
+    [TradeMsgCode.QUERY_ORDER]: "Query Order",
+    [TradeMsgCode.ORDER_DELETE_ERROR]: "Failed to delete order",
+    [TradeMsgCode.ORDER_DELETE_RETURN_ERROR]: "Delete order returned error",
+    [TradeMsgCode.ORDER_DELETED]: "Order Deleted"
 }

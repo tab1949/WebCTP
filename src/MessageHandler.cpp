@@ -145,6 +145,10 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
         else
             t.queryOrder();
         return "";
+    }},
+    {"delete_order", [](cjr j, thr t) {
+        t.deleteOrder(j["exchange"], j["instrument"], j["delete_ref"], j["order_sys_id"]);
+        return "";
     }}
 };
 

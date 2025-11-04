@@ -21,6 +21,8 @@ export class Trade {
     public onOrderInserted: (data: any) => void = () => {};
     public onOrderTraded: (data: any) => void = () => {};
     public onQueryOrder: (data: any) => void = () => {};
+    public onOrderDeleteError: (data: any) => void = () => {};
+    public onOrderDeleted: (data: any) => void = () => {};
     private brokerID: string;
     private investorID: string;
     private frontAddr: string | undefined;
@@ -42,7 +44,6 @@ export class Trade {
         }
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         const data: any = {};
         if (brokerID !== undefined) {
@@ -60,7 +61,6 @@ export class Trade {
     public getTradingDay() {
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         this.ws.send(JSON.stringify({
             op: "get_trading_day",
@@ -86,7 +86,6 @@ export class Trade {
     public login(userID: string, password: string) {
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         this.ws.send(JSON.stringify({
             op: "login",
@@ -126,7 +125,6 @@ export class Trade {
     public confirmSettlementInfo() {
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         this.ws.send(JSON.stringify({
             op: "confirm_settlement_info",
@@ -158,7 +156,6 @@ export class Trade {
     ) {
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         this.ws.send(JSON.stringify({
             op: "insert_order",
@@ -184,7 +181,6 @@ export class Trade {
     }) {
         if (!this.ws) {
             throw new Error("WebSocket is not connected");
-            return;
         }
         const data: any = {};
         if (options) {
@@ -204,6 +200,21 @@ export class Trade {
         this.ws.send(JSON.stringify({
             op: "query_order",
             data: data
+        }));
+    }
+
+    public deleteOrder(exchange: string, instrument: string, delRef: number, orderSysID: string) {
+        if (!this.ws) {
+            throw new Error("WebSocket is not connected");
+        }
+        this.ws.send(JSON.stringify({
+            op: "delete_order",
+            data: {
+                exchange: exchange,
+                instrument: instrument,
+                delete_ref: delRef,
+                order_sys_id: orderSysID
+            }
         }));
     }
 
@@ -296,6 +307,7 @@ export class Trade {
             case Message.TradeMsgCode.TRADING_ACCOUNT:
                 this.onTradingAccount(data);
                 break;
+            case Message.TradeMsgCode.ORDER_INSERT_RETURN_ERROR:
             case Message.TradeMsgCode.ORDER_INSERT_ERROR:
                 this.onOrderInsertError(data);
                 break;
@@ -307,6 +319,13 @@ export class Trade {
                 break;
             case Message.TradeMsgCode.QUERY_ORDER:
                 this.onQueryOrder(data);
+                break;
+            case Message.TradeMsgCode.ORDER_DELETE_RETURN_ERROR:
+            case Message.TradeMsgCode.ORDER_DELETE_ERROR:
+                this.onOrderDeleteError(data);
+                break;
+            case Message.TradeMsgCode.ORDER_DELETED:
+                this.onOrderDeleted(data);
                 break;
             default:
                 if (data.status && data.status == "ready") {

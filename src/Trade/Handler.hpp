@@ -105,6 +105,11 @@ public:
         CThostFtdcOrderField *pOrder, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
+    void deleteOrder(const string& exchange, const string& instrument, int delRef, const string& sysID);
+    void OnRspOrderAction(CThostFtdcInputOrderActionField*, CThostFtdcRspInfoField*, int, bool) override;
+    void OnErrRtnOrderAction(CThostFtdcOrderActionField*, CThostFtdcRspInfoField*) override;
+    // OnRtnOrder() is defined
+
 private:
     template <typename T>
     inline void clear(T* mem) noexcept {

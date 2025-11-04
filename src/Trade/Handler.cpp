@@ -358,7 +358,7 @@ void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
     else {
         logger_->error("tabxx::TraderHandler::OnRtnOrder(): Parameter 'pOrder' is nullptr!");
     }
-    send(TradeMsgCode::ORDER_INSERTED,
+    send(status == OrderStatus::CANCELED ? TradeMsgCode::ORDER_DELETED: TradeMsgCode::ORDER_INSERTED,
         {
             {"code", 0},
             {"msg", ""}
@@ -504,6 +504,76 @@ void TraderHandler::OnRspQryOrder(
             {"is_last", bIsLast}
         }
     );
+}
+
+void TraderHandler::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+    send(TradeMsgCode::ORDER_DELETE_ERROR, pRspInfo,
+        pInputOrderAction? json {
+            {"broker_id", pInputOrderAction->BrokerID},
+            {"investor_id", pInputOrderAction->InvestorID},
+            {"order_action_ref", pInputOrderAction->OrderActionRef},
+            {"order_ref", pInputOrderAction->OrderRef},
+            {"req_id", pInputOrderAction->RequestID},
+            {"front_id", pInputOrderAction->FrontID},
+            {"session_id", pInputOrderAction->SessionID},
+            {"exchange_id", pInputOrderAction->ExchangeID},
+            {"order_sys_id", pInputOrderAction->OrderSysID},
+            {"action_flag", pInputOrderAction->ActionFlag},
+            {"limit_price", pInputOrderAction->LimitPrice},
+            {"volume_change", pInputOrderAction->VolumeChange},
+            {"user_id", pInputOrderAction->UserID},
+            {"invest_unit_id", pInputOrderAction->InvestUnitID},
+            {"mac_address", pInputOrderAction->MacAddress},
+            {"instrument_id", pInputOrderAction->InstrumentID},
+            {"ip_address", pInputOrderAction->IPAddress},
+            {"order_memo", pInputOrderAction->OrderMemo},
+            {"session_req_seq", pInputOrderAction->SessionReqSeq},
+            {"req_id", nRequestID},
+            {"is_last", bIsLast}
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast}
+        }
+    );
+}
+
+void TraderHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo) {
+    send(TradeMsgCode::ORDER_DELETE_RETURN_ERROR, pRspInfo,
+        pOrderAction ? json {
+            {"broker_id", pOrderAction->BrokerID},
+            {"investor_id", pOrderAction->InvestorID},
+            {"order_action_ref", pOrderAction->OrderActionRef},
+            {"order_ref", pOrderAction->OrderRef},
+            {"req_id", pOrderAction->RequestID},
+            {"front_id", pOrderAction->FrontID},
+            {"session_id", pOrderAction->SessionID},
+            {"exchange_id", pOrderAction->ExchangeID},
+            {"order_sys_id", pOrderAction->OrderSysID},
+            {"action_flag", pOrderAction->ActionFlag},
+            {"limit_price", pOrderAction->LimitPrice},
+            {"volume_change", pOrderAction->VolumeChange},
+            {"action_date", pOrderAction->ActionDate},
+            {"action_time", pOrderAction->ActionTime},
+            {"trader_id", pOrderAction->TraderID},
+            {"install_id", pOrderAction->InstallID},
+            {"order_local_id", pOrderAction->OrderLocalID},
+            {"action_local_id", pOrderAction->ActionLocalID},
+            {"participant_id", pOrderAction->ParticipantID},
+            {"client_id", pOrderAction->ClientID},
+            {"business_unit", pOrderAction->BusinessUnit},
+            {"order_action_status", pOrderAction->OrderActionStatus},
+            {"user_id", pOrderAction->UserID},
+            {"status_msg", u8(pOrderAction->StatusMsg)},
+            {"branch_id", pOrderAction->BranchID},
+            {"invest_unit_id", pOrderAction->InvestUnitID},
+            {"mac_address", pOrderAction->MacAddress},
+            {"instrument_id", pOrderAction->InstrumentID},
+            {"ip_address", pOrderAction->IPAddress},
+            {"order_memo", pOrderAction->OrderMemo},
+            {"session_req_seq", pOrderAction->SessionReqSeq}
+        } : json {}
+    );
+
 }
 
 } // namespace tabxx

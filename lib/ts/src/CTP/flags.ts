@@ -41,3 +41,15 @@ export enum OrderSubmitStatus {
     CANCEL_REJECTED = 5,
     MODIFY_REJECTED = 6
 }
+
+export enum OrderStatus {
+    ALL_TRADED = 0,
+    PART_TRADED_QUEUEING = 1,
+    PART_TRADED_NOT_QUEUEING = 2,
+    NOT_TRADED_QUEUEING = 3,
+    NOT_TRADED_NOT_QUEUEING = 4,
+    CANCELED = 5,
+    UNKNOWN = 6,
+    NOT_TOUCHED = 7,
+    TOUCHED = 8
+}

@@ -21,7 +21,10 @@ enum class TradeMsgCode {
     ORDER_INSERT_RETURN_ERROR,
     ORDER_INSERTED,
     ORDER_TRADED,
-    QUERY_ORDER
+    QUERY_ORDER,
+    ORDER_DELETE_ERROR,
+    ORDER_DELETE_RETURN_ERROR,
+    ORDER_DELETED
 };
 
 } // namespace tabxx

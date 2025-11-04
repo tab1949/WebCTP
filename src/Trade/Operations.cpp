@@ -129,6 +129,7 @@ void TraderHandler::insertOrder(
     double price, Direction direction, 
     OrderOffset offset, int volume, 
     OrderPriceType price_type, TimeCondition time_condition,
+    const string& memo,
     Hedge hedge) {
     CThostFtdcInputOrderField f;
     clear(&f);
@@ -202,6 +203,7 @@ void TraderHandler::insertOrder(
     copy(f.InvestorID, investor_id_);
     copy(f.InstrumentID, instrument);
     copy(f.OrderRef, ref);
+    copy(f.OrderMemo, memo);
     int req_id = req_id_++;
     f.RequestID = req_id;
     auto ret = api_->ReqOrderInsert(&f, req_id);

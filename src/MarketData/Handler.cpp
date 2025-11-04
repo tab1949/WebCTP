@@ -4,13 +4,7 @@ namespace tabxx {
 
 
 void MarketDataHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::ERROR, 
-        pRspInfo? json {
-            {"msg", pRspInfo->ErrorMsg},
-            {"code", MDMsgCode::ERROR},
-            {"error", pRspInfo->ErrorID},
-            {"request_id", nRequestID}
-        }: json(),
+    send(MDMsgCode::ERROR, pRspInfo,
         {
             {"req_id", nRequestID},
             {"is_last", bIsLast}
@@ -41,11 +35,7 @@ void MarketDataHandler::OnHeartBeatWarning(int time) {
 void MarketDataHandler::OnRspUserLogin(
     CThostFtdcRspUserLoginField *pRspUserLogin, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::LOGIN,
-        pRspInfo? json {
-            {"msg", pRspInfo->ErrorMsg},
-            {"code", pRspInfo->ErrorID},
-        }: json(),
+    send(MDMsgCode::LOGIN, pRspInfo,
         pRspUserLogin? json {
             {"msg", "Login success"},
             {"code", MDMsgCode::LOGIN},
@@ -80,11 +70,7 @@ void MarketDataHandler::OnRspUserLogin(
 void MarketDataHandler::OnRspUserLogout(
     CThostFtdcUserLogoutField *pUserLogout, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::LOGOUT,
-        pRspInfo? json {
-            {"msg", pRspInfo->ErrorMsg},
-            {"code", pRspInfo->ErrorID}
-        }: json(),
+    send(MDMsgCode::LOGOUT, pRspInfo,
         pUserLogout? json {
             {"broker_id", pUserLogout->BrokerID},
             {"user_id", pUserLogout->UserID},
@@ -101,11 +87,7 @@ void MarketDataHandler::OnRspUserLogout(
 void MarketDataHandler::OnRspSubMarketData(
     CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::SUBSCRIBE,
-        pRspInfo? json {
-            {"msg", pRspInfo->ErrorMsg},
-            {"code", pRspInfo->ErrorID},
-        }: json(),
+    send(MDMsgCode::SUBSCRIBE, pRspInfo,
         pSpecificInstrument? json {
             {"instrument_id", pSpecificInstrument->InstrumentID},
             {"req_id", nRequestID},
@@ -120,11 +102,7 @@ void MarketDataHandler::OnRspSubMarketData(
 void MarketDataHandler::OnRspUnSubMarketData(
     CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::SUBSCRIBE,
-        pRspInfo? json {
-            {"msg", pRspInfo->ErrorMsg},
-            {"code", pRspInfo->ErrorID},
-        }: json(),
+    send(MDMsgCode::SUBSCRIBE, pRspInfo,
         pSpecificInstrument? json {
             {"instrument_id", pSpecificInstrument->InstrumentID},
             {"req_id", nRequestID},
@@ -139,7 +117,7 @@ void MarketDataHandler::OnRspUnSubMarketData(
 
 void MarketDataHandler::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) {
     send(MDMsgCode::MARKET_DATA, {},
-        json {
+        pDepthMarketData? json {
             {"trading_day", pDepthMarketData->TradingDay},
             {"instrument_id", pDepthMarketData->InstrumentID},
             {"exchange_id", pDepthMarketData->ExchangeID},
@@ -186,7 +164,7 @@ void MarketDataHandler::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDe
             {"action_day", pDepthMarketData->ActionDay},
             {"banding_upper_price", pDepthMarketData->BandingUpperPrice},
             {"banding_lower_price", pDepthMarketData->BandingLowerPrice}
-        }
+        }: json()
     );
 }
 

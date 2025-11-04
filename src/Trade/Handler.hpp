@@ -90,6 +90,7 @@ public:
         double price, Direction direction, 
         OrderOffset offset, int volume, 
         OrderPriceType price_type, TimeCondition time_condition,
+        const string& memo = "",
         Hedge hedge = Hedge::SPECULATION);
     void OnRspOrderInsert(CThostFtdcInputOrderField*, CThostFtdcRspInfoField*, int, bool) override;
     void OnErrRtnOrderInsert(CThostFtdcInputOrderField*, CThostFtdcRspInfoField*) override;
@@ -119,14 +120,6 @@ private:
         send(TradeMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}});
     }
 
-    inline void send(TradeMsgCode code, const json& err, const json& info) {
-        send({
-            {"msg", code},
-            {"err", err},
-            {"info", info}
-        });
-    }
-
     inline void send(json&& data) {
         if (ws_) {
             try {
@@ -137,6 +130,25 @@ private:
                 logger_->error("tabxx::TraderHandler::send(): Exception caught. what(): "_s + e.what());
             }
         }
+    }
+
+    inline void send(TradeMsgCode code, const json& err, const json& info) {
+        send({
+            {"msg", code},
+            {"err", err},
+            {"info", info}
+        });
+    }
+
+    inline void send(TradeMsgCode code, const CThostFtdcRspInfoField *pRspInfo, const json& info) {
+        send({
+            {"msg", code},
+            {"err", pRspInfo? json {
+                {"code", pRspInfo->ErrorID},
+                {"msg", u8(pRspInfo->ErrorMsg)}
+            }: json()},
+            {"info", info}
+        });
     }
 
 private:

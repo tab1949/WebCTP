@@ -3,12 +3,7 @@
 namespace tabxx {
 
 void TraderHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::ERROR,
-    {
-        {"code", pRspInfo->ErrorID},
-        {"msg", u8(pRspInfo->ErrorMsg)}
-    }, 
-    {
+    send(TradeMsgCode::ERROR, pRspInfo, {
         {"req_id", nRequestID},
         {"is_last", bIsLast}
     });
@@ -49,12 +44,7 @@ void TraderHandler::OnRspAuthenticate(
     CThostFtdcRspAuthenticateField *pRspAuthenticateField, 
     CThostFtdcRspInfoField *pRspInfo, 
     int nRequestID, bool bIsLast)  {
-    send(TradeMsgCode::AUTHENTICATE,
-        {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        },
-        {
+    send(TradeMsgCode::AUTHENTICATE, pRspInfo, pRspAuthenticateField? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
             {"app_id", pRspAuthenticateField->AppID},
@@ -62,6 +52,9 @@ void TraderHandler::OnRspAuthenticate(
             {"broker_id", pRspAuthenticateField->BrokerID},
             {"user_id", pRspAuthenticateField->UserID},
             {"user_product_info", u8(pRspAuthenticateField->UserProductInfo)}
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
         }
     );
 }
@@ -70,12 +63,7 @@ void TraderHandler::OnRspUserLogin(
     CThostFtdcRspUserLoginField *pRspUserLogin, 
     CThostFtdcRspInfoField *pRspInfo, 
     int nRequestID, bool bIsLast)  {
-    send(TradeMsgCode::LOGIN,
-        {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        },
-        {
+    send(TradeMsgCode::LOGIN, pRspInfo, pRspUserLogin? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
             {"trading_day", pRspUserLogin->TradingDay},
@@ -96,7 +84,9 @@ void TraderHandler::OnRspUserLogin(
             {"login_dr_identity_id", pRspUserLogin->LoginDRIdentityID},
             {"user_dr_identity_id", pRspUserLogin->UserDRIdentityID},
             {"last_login_time", pRspUserLogin->LastLoginTime},
-            // {"", pRspUserLogin->ReserveInfo}
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
         }
     );
 }
@@ -105,16 +95,14 @@ void TraderHandler::OnRspUserLogout(
     CThostFtdcUserLogoutField *pUserLogout, 
     CThostFtdcRspInfoField *pRspInfo, 
     int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::LOGOUT,
-        {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        },
-        {
+    send(TradeMsgCode::LOGOUT, pRspInfo, pUserLogout? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
             {"broker_id", pUserLogout->BrokerID},
             {"user_id", pUserLogout->UserID}
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
         }
     );
 }
@@ -122,12 +110,7 @@ void TraderHandler::OnRspUserLogout(
 void TraderHandler::OnRspQrySettlementInfo(
     CThostFtdcSettlementInfoField *pSettlementInfo, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::SETTLEMENT_INFO,
-        pRspInfo? json {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        }: json(),
-        pSettlementInfo? json {
+    send(TradeMsgCode::SETTLEMENT_INFO, pRspInfo, pSettlementInfo? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
             {"trading_day", pSettlementInfo->TradingDay},
@@ -138,18 +121,17 @@ void TraderHandler::OnRspQrySettlementInfo(
             {"content", u8(pSettlementInfo->Content)},
             {"account_id", pSettlementInfo->AccountID},
             {"currency_id", pSettlementInfo->CurrencyID}
-        }: json()
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
+        }
     );
 }
 
 void TraderHandler::OnRspSettlementInfoConfirm(
     CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::SETTLEMENT_INFO_CONFIRM,
-        pRspInfo? json {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        }: json(),
+    send(TradeMsgCode::SETTLEMENT_INFO_CONFIRM, pRspInfo,
         pSettlementInfoConfirm? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
@@ -160,18 +142,17 @@ void TraderHandler::OnRspSettlementInfoConfirm(
             {"settlement_id", pSettlementInfoConfirm->SettlementID},
             {"account_id", pSettlementInfoConfirm->AccountID},
             {"currency_id", pSettlementInfoConfirm->CurrencyID}
-        }: json()
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
+        }
     );
 }
 
 void TraderHandler::OnRspQryTradingAccount(
     CThostFtdcTradingAccountField *pTradingAccount, 
     CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::TRADING_ACCOUNT,
-        pRspInfo? json {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        }: json(),
+    send(TradeMsgCode::TRADING_ACCOUNT, pRspInfo,
         pTradingAccount? json {
             {"req_id", nRequestID},
             {"is_last", bIsLast},
@@ -224,17 +205,69 @@ void TraderHandler::OnRspQryTradingAccount(
             {"frozen_swap", pTradingAccount->FrozenSwap},
             {"remain_swap", pTradingAccount->RemainSwap},
             {"option_value", pTradingAccount->OptionValue}
-        }: json()
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
+        }
     );
 }
 
 void TraderHandler::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::ORDER_INSERT_ERROR,
-        {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        },
-        {
+    Direction direction;
+    OrderOffset of;
+    OrderPriceType opt;
+    Hedge hedge;
+    TimeCondition tc;
+    if (pInputOrder) {
+        try {
+            direction = GetDirection(pInputOrder->Direction);
+            of = GetOrderOperation(pInputOrder->CombOffsetFlag[0]);
+            opt = GetOrderPriceType(pInputOrder->OrderPriceType);
+            hedge = GetHedge(pInputOrder->CombHedgeFlag[0]);
+            tc = GetTimeCondition(pInputOrder->TimeCondition);
+        }
+        catch (const std::exception& e) {
+            logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): Exception caught");
+            send(TradeMsgCode::ERROR_UNKNOWN_VALUE, pRspInfo, {
+                {"info", e.what()},
+                {"req_id", nRequestID},
+                {"is_last", bIsLast}
+            });
+            logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): what(): "_s + e.what());
+        }
+    }
+    else {
+        logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): pInputOrder is nullptr");
+    }
+    send(TradeMsgCode::ORDER_INSERT_ERROR, pRspInfo,
+        pInputOrder? json {
+            {"account_id", pInputOrder->AccountID},
+            {"user_id", pInputOrder->UserID},
+            {"investor_id", pInputOrder->InvestorID},
+            {"broker_id", pInputOrder->BrokerID},
+            {"client_id", pInputOrder->ClientID},
+            {"currency_id", pInputOrder->CurrencyID},
+            {"exchange_id", pInputOrder->ExchangeID},
+            {"gtd_date", pInputOrder->GTDDate},
+            {"instrument_id", pInputOrder->InstrumentID},
+            {"is_auto_suspend", pInputOrder->IsAutoSuspend},
+            {"is_swap_order", pInputOrder->IsSwapOrder},
+            {"limit_price", pInputOrder->LimitPrice},
+            {"stop_price", pInputOrder->StopPrice},
+            {"volume_total_original", pInputOrder->VolumeTotalOriginal},
+            {"min_volume", pInputOrder->MinVolume},
+            {"order_memo", pInputOrder->OrderMemo},
+            {"order_ref", pInputOrder->OrderRef},
+            {"request_id", pInputOrder->RequestID},
+            {"session_req_seq_", pInputOrder->SessionReqSeq},
+            {"direction", direction},
+            {"offset", of},
+            {"price_type", opt},
+            {"hedge", hedge},
+            {"time_condition", tc},
+            {"req_id", nRequestID},
+            {"is_last", bIsLast}
+        }: json {
             {"req_id", nRequestID},
             {"is_last", bIsLast}
         }
@@ -242,116 +275,94 @@ void TraderHandler::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CTh
 }
 
 void TraderHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo) {
-    send(TradeMsgCode::ORDER_INSERT_ERROR,
-        {
-            {"code", pRspInfo->ErrorID},
-            {"msg", u8(pRspInfo->ErrorMsg)}
-        },
-        {
-            {"req_id", pInputOrder->RequestID}
+    Direction direction;
+    OrderOffset of;
+    OrderPriceType opt;
+    Hedge hedge;
+    TimeCondition tc;
+    if (pInputOrder) {
+        try {
+            direction = GetDirection(pInputOrder->Direction);
+            of = GetOrderOperation(pInputOrder->CombOffsetFlag[0]);
+            opt = GetOrderPriceType(pInputOrder->OrderPriceType);
+            hedge = GetHedge(pInputOrder->CombHedgeFlag[0]);
+            tc = GetTimeCondition(pInputOrder->TimeCondition);
         }
+        catch (const std::exception& e) {
+            logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): Exception caught");
+            send(TradeMsgCode::ERROR_UNKNOWN_VALUE, pRspInfo, {
+                {"info", e.what()},
+            });
+            logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): what(): "_s + e.what());
+        }
+    }
+    else {
+        logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): pInputOrder is nullptr");
+    }
+    send(TradeMsgCode::ORDER_INSERT_RETURN_ERROR, pRspInfo,
+        pInputOrder? json {
+            {"account_id", pInputOrder->AccountID},
+            {"user_id", pInputOrder->UserID},
+            {"investor_id", pInputOrder->InvestorID},
+            {"broker_id", pInputOrder->BrokerID},
+            {"client_id", pInputOrder->ClientID},
+            {"currency_id", pInputOrder->CurrencyID},
+            {"exchange_id", pInputOrder->ExchangeID},
+            {"gtd_date", pInputOrder->GTDDate},
+            {"instrument_id", pInputOrder->InstrumentID},
+            {"is_auto_suspend", pInputOrder->IsAutoSuspend},
+            {"is_swap_order", pInputOrder->IsSwapOrder},
+            {"limit_price", pInputOrder->LimitPrice},
+            {"stop_price", pInputOrder->StopPrice},
+            {"volume_total_original", pInputOrder->VolumeTotalOriginal},
+            {"min_volume", pInputOrder->MinVolume},
+            {"order_memo", pInputOrder->OrderMemo},
+            {"order_ref", pInputOrder->OrderRef},
+            {"request_id", pInputOrder->RequestID},
+            {"session_req_seq", pInputOrder->SessionReqSeq},
+            {"direction", direction},
+            {"offset", of},
+            {"price_type", opt},
+            {"hedge", hedge},
+            {"time_condition", tc}
+        }: json()
     );
 }
 
 void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
     OrderSubmitStatus submitStatus;
-    try {
-        submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
-    }
-    catch (...) {
-        logger_->error("Unknown OrderSubmitStatus: "_s + pOrder->OrderStatus, "tabxx::TraderHandler::OnRtnOrder()");
-        send(TradeMsgCode::ERROR_UNKNOWN_VALUE,
-            {}, {{"info", "tabxx::TraderHandler::OnRtnOrder(): Unknown OrderSubmitStatus: "_s + pOrder->OrderStatus}});
-    }
     OrderStatus status;
-    try {
-        status = GetOrderStatus(pOrder->OrderStatus);
+    Direction direction;
+    OrderOffset of;
+    OrderPriceType opt;
+    Hedge hedge;
+    TimeCondition tc;
+    if (pOrder) {
+        try {
+            submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
+            status = GetOrderStatus(pOrder->OrderStatus);
+            direction = GetDirection(pOrder->Direction);
+            of = GetOrderOperation(pOrder->CombOffsetFlag[0]);
+            opt = GetOrderPriceType(pOrder->OrderPriceType);
+            hedge = GetHedge(pOrder->CombHedgeFlag[0]);
+            tc = GetTimeCondition(pOrder->TimeCondition);
+        }
+        catch (const std::exception& e) {
+            logger_->error("tabxx::TraderHandler::OnRtnOrder(): Exception caught.");
+            send(TradeMsgCode::ERROR_UNKNOWN_VALUE, {}, {
+                {"info", e.what()}
+            });
+            logger_->error("tabxx::TraderHandler::OnRtnOrder(): what(): "_s + e.what());
+        }
     }
-    catch (...) {
-        logger_->error("Unknown OrderStatus: "_s + pOrder->OrderStatus, "tabxx::TraderHandler::OnRtnOrder()");
-        send(TradeMsgCode::ERROR_UNKNOWN_VALUE,
-            {}, {{"info", "tabxx::TraderHandler::OnRtnOrder(): Unknown OrderStatus: "_s + pOrder->OrderStatus}});
+    else {
+        logger_->error("tabxx::TraderHandler::OnRtnOrder(): Parameter 'pOrder' is nullptr!");
     }
     send(TradeMsgCode::ORDER_INSERTED,
         {
             {"code", 0},
             {"msg", ""}
         },
-        {
-            {"broker_id", pOrder->BrokerID},
-            {"investor_id", pOrder->InvestorID},
-            {"user_id", pOrder->UserID},
-            {"exchange_id", pOrder->ExchangeID},
-            {"req_id", pOrder->RequestID},
-            {"ref", pOrder->OrderRef},
-            {"order_local_id", pOrder->OrderLocalID},
-            {"order_sys_id", pOrder->OrderSysID},
-            {"sequence_no", pOrder->SequenceNo},
-            {"instrument_id", pOrder->InstrumentID},
-            {"insert_date", pOrder->InsertDate},
-            {"insert_time", pOrder->InsertTime},
-            {"active_time", pOrder->ActiveTime},
-            {"suspend_time", pOrder->SuspendTime},
-            {"update_time", pOrder->UpdateTime},
-            {"cancel_time", pOrder->CancelTime},
-            {"order_submit_status", submitStatus},
-            {"order_status", status},
-            {"volume_traded", pOrder->VolumeTraded},
-            {"volume_total", pOrder->VolumeTotal},
-            {"status_msg", u8(pOrder->StatusMsg)}
-        }
-    );
-}
-
-void TraderHandler::OnRtnTrade(CThostFtdcTradeField *pTrade) {
-    send(TradeMsgCode::ORDER_TRADED,
-        {
-            {"code", 0},
-            {"msg", ""}
-        },
-        {
-            {"broker_id", pTrade->BrokerID},
-            {"investor_id", pTrade->InvestorID},
-            {"user_id", pTrade->UserID},
-            {"ref", pTrade->OrderRef},
-            {"exchange_id", pTrade->ExchangeID},
-            {"trade_id", pTrade->TradeID},
-            {"order_sys_id", pTrade->OrderSysID},
-            {"order_local_id", pTrade->OrderLocalID},
-            {"broker_order_seq", pTrade->BrokerOrderSeq},
-            {"settlement_id", pTrade->SettlementID},
-            {"volume", pTrade->Volume},
-        }
-    );
-
-}
-
-void TraderHandler::OnRspQryOrder(
-    CThostFtdcOrderField *pOrder, 
-    CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    OrderSubmitStatus submitStatus;
-    try {
-        submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
-    }
-    catch (...) {
-        logger_->error("Unknown OrderSubmitStatus: "_s + pOrder->OrderStatus, "tabxx::TraderHandler::OnRspQryOrder()");
-        send(TradeMsgCode::ERROR_UNKNOWN_VALUE,
-            {}, {{"info", "tabxx::TraderHandler::OnRspQryOrder(): Unknown OrderSubmitStatus: "_s + pOrder->OrderStatus}});
-    }
-    OrderStatus status;
-    try {
-        status = GetOrderStatus(pOrder->OrderStatus);
-    }
-    catch (...) {
-        logger_->error("Unknown OrderStatus: "_s + pOrder->OrderStatus, "tabxx::TraderHandler::OnRspQryOrder()");
-        send(TradeMsgCode::ERROR_UNKNOWN_VALUE,
-            {}, {{"info", "tabxx::TraderHandler::OnRspQryOrder(): Unknown OrderStatus: "_s + pOrder->OrderStatus}});
-    }
-    send(TradeMsgCode::QUERY_ORDER,
-        pRspInfo? json {
-            {"code", pRspInfo->ErrorID},
-            {"msg", pRspInfo->ErrorMsg}
-        }: json(),
         pOrder? json {
             {"broker_id", pOrder->BrokerID},
             {"investor_id", pOrder->InvestorID},
@@ -374,9 +385,124 @@ void TraderHandler::OnRspQryOrder(
             {"volume_traded", pOrder->VolumeTraded},
             {"volume_total", pOrder->VolumeTotal},
             {"status_msg", u8(pOrder->StatusMsg)},
+            {"direction", direction},
+            {"offset", of},
+            {"price_type", opt},
+            {"hedge", hedge},
+            {"time_condition", tc}
+        }: json()
+    );
+}
+
+void TraderHandler::OnRtnTrade(CThostFtdcTradeField *pTrade) {
+    Direction direction;
+    OrderOffset of;
+    Hedge hedge;
+    if (pTrade) {
+        try {
+            direction = GetDirection(pTrade->Direction);
+            of = GetOrderOperation(pTrade->OffsetFlag);
+            hedge = GetHedge(pTrade->HedgeFlag);
+        }
+        catch (const std::exception& e) {
+            logger_->error("tabxx::TraderHandler::OnRtnTrade(): Exception caught.");
+            send(TradeMsgCode::ERROR_UNKNOWN_VALUE, {}, {
+                {"info", e.what()}
+            });
+            logger_->error("tabxx::TraderHandler::OnRtnTrade(): what(): "_s + e.what());
+        }
+    }
+    else {
+        logger_->error("tabxx::TraderHandler::OnRtnTrade(): Parameter 'pTrade' is nullptr!");
+    }
+    send(TradeMsgCode::ORDER_TRADED,
+        {
+            {"code", 0},
+            {"msg", ""}
+        },
+        pTrade? json {
+            {"broker_id", pTrade->BrokerID},
+            {"investor_id", pTrade->InvestorID},
+            {"user_id", pTrade->UserID},
+            {"ref", pTrade->OrderRef},
+            {"exchange_id", pTrade->ExchangeID},
+            {"trade_id", pTrade->TradeID},
+            {"order_sys_id", pTrade->OrderSysID},
+            {"order_local_id", pTrade->OrderLocalID},
+            {"broker_order_seq", pTrade->BrokerOrderSeq},
+            {"settlement_id", pTrade->SettlementID},
+            {"volume", pTrade->Volume},
+            {"direction", direction},
+            {"offset", of},
+            {"hedge", hedge}
+        }: json()
+    );
+
+}
+
+void TraderHandler::OnRspQryOrder(
+    CThostFtdcOrderField *pOrder, 
+    CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+    OrderSubmitStatus submitStatus;
+    OrderStatus status;
+    Direction direction;
+    OrderOffset of;
+    OrderPriceType opt;
+    Hedge hedge;
+    TimeCondition tc;
+    if (pOrder) {
+        try {
+            submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
+            status = GetOrderStatus(pOrder->OrderStatus);
+            direction = GetDirection(pOrder->Direction);
+            of = GetOrderOperation(pOrder->CombOffsetFlag[0]);
+            opt = GetOrderPriceType(pOrder->OrderPriceType);
+            hedge = GetHedge(pOrder->CombHedgeFlag[0]);
+            tc = GetTimeCondition(pOrder->TimeCondition);
+        }
+        catch (const std::exception& e) {
+            logger_->error((std::string)"tabxx::TraderHandler::OnRspQryOrder(): Exception caught.");
+            send(TradeMsgCode::ERROR_UNKNOWN_VALUE, {}, {
+                {"info", e.what()}
+            });
+            logger_->error((std::string)"tabxx::TraderHandler::OnRspQryOrder(): what(): " + e.what());
+        }
+    }
+    send(TradeMsgCode::QUERY_ORDER, pRspInfo,
+        pOrder? json {
+            {"broker_id", pOrder->BrokerID},
+            {"investor_id", pOrder->InvestorID},
+            {"user_id", pOrder->UserID},
+            {"exchange_id", pOrder->ExchangeID},
+            {"req_id", pOrder->RequestID},
+            {"ref", pOrder->OrderRef},
+            {"order_local_id", pOrder->OrderLocalID},
+            {"order_sys_id", pOrder->OrderSysID},
+            {"sequence_no", pOrder->SequenceNo},
+            {"instrument_id", pOrder->InstrumentID},
+            {"insert_date", pOrder->InsertDate},
+            {"insert_time", pOrder->InsertTime},
+            {"active_time", pOrder->ActiveTime},
+            {"suspend_time", pOrder->SuspendTime},
+            {"update_time", pOrder->UpdateTime},
+            {"cancel_time", pOrder->CancelTime},
+            {"order_submit_status", submitStatus},
+            {"order_status", status},
+            {"order_memo", pOrder->OrderMemo},
+            {"volume_traded", pOrder->VolumeTraded},
+            {"volume_total", pOrder->VolumeTotal},
+            {"status_msg", u8(pOrder->StatusMsg)},
+            {"direction", direction},
+            {"offset", of},
+            {"price_type", opt},
+            {"hedge", hedge},
+            {"time_condition", tc},
             {"req_id", nRequestID},
             {"is_last", bIsLast}
-        }: json()
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast}
+        }
     );
 }
 

@@ -13,6 +13,7 @@
 #include "MessageCode.hpp"
 #include "../Types.hpp"
 #include "../Logger.hpp"
+#include "../Encoding.hpp"
 
 namespace tabxx {
 class MarketDataHandler final: public CThostFtdcMdSpi {
@@ -21,7 +22,7 @@ public:
     MarketDataHandler(WebSocket* ws, uWS::Loop* loop, Logger* logger):
         api_(CThostFtdcMdApi::CreateFtdcMdApi("./flow")), 
         ws_(ws), loop_(loop), logger_(logger), req_id_(1) {
-
+        api_->RegisterSpi(this);
     }
 
     ~MarketDataHandler() {
@@ -121,14 +122,6 @@ private:
         send(MDMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}});
     }
 
-    inline void send(MDMsgCode code, const json& err, const json& info) {
-        send({
-            {"msg", code},
-            {"err", err},
-            {"info", info}
-        });
-    }
-
     inline void send(json&& data) {
         if (ws_) {
             try {
@@ -139,6 +132,25 @@ private:
                 logger_->error("tabxx::TraderHandler::send(): Exception caught. what(): "_s + e.what());
             }
         }
+    }
+
+    inline void send(MDMsgCode code, const json& err, const json& info) {
+        send({
+            {"msg", code},
+            {"err", err},
+            {"info", info}
+        });
+    }
+
+    inline void send(MDMsgCode code, const CThostFtdcRspInfoField *pRspInfo, const json& info) {
+        send({
+            {"msg", code},
+            {"err", pRspInfo? json {
+                {"code", pRspInfo->ErrorID},
+                {"msg", u8(pRspInfo->ErrorMsg)}
+            }: json()},
+            {"info", info}
+        });
     }
 
 private:

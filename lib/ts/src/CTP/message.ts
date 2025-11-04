@@ -41,6 +41,7 @@ export enum TradeMsgCode {
     SETTLEMENT_INFO_CONFIRM,
     TRADING_ACCOUNT,
     ORDER_INSERT_ERROR,
+    ORDER_INSERT_RETURN_ERROR,
     ORDER_INSERTED,
     ORDER_TRADED,
     QUERY_ORDER
@@ -61,6 +62,7 @@ export const TradeMsgInfo: Record<TradeMsgCode, string> = {
     [TradeMsgCode.SETTLEMENT_INFO_CONFIRM]: "Settlement Info Confirm",
     [TradeMsgCode.TRADING_ACCOUNT]: "Trading Account",
     [TradeMsgCode.ORDER_INSERT_ERROR]: "Order Insert Error",
+    [TradeMsgCode.ORDER_INSERT_RETURN_ERROR]: "Order Insert Returned Error",
     [TradeMsgCode.ORDER_INSERTED]: "Order Inserted",
     [TradeMsgCode.ORDER_TRADED]: "Order Traded",
     [TradeMsgCode.QUERY_ORDER]: "Query Order"

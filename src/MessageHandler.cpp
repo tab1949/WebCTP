@@ -128,7 +128,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             t.insertOrder(
                 j["instrument"], j["exchange"], j["ref"], 
                 j["price"], j["direction"], j["offset"], j["volume"],
-                j["price_type"], j["time_condition"]);
+                j["price_type"], j["time_condition"], j.contains("memo")? j["memo"]: "");
             return "";
         }
         catch (const std::exception& e) {

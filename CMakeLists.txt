@@ -13,25 +13,38 @@ find_library(CTP_MD_LIB thostmduserapi_se HINTS /usr/local/lib /usr/lib)
 find_library(CTP_TRADER_LIB thosttraderapi_se HINTS /usr/local/lib /usr/lib)
 find_library(ICU_LIB icuuc icudata)
 
-add_executable(WebCTP 
+add_executable(webctp 
     src/main.cpp
     src/Encoding.cpp
     src/MessageHandler.cpp
     src/MarketData/Handler.cpp
-    # src/MarketData/Operations.cpp
     src/Trade/Handler.cpp
     src/Trade/Operations.cpp
+    src/SubProcess/SubProcess.cpp
+    src/WebSocketApp.cpp
 )
 
-target_include_directories(WebCTP PRIVATE /usr/local/include)
+target_include_directories(webctp PRIVATE /usr/local/include)
 
-target_link_libraries(WebCTP 
+target_link_libraries(webctp 
     ${US_LIB}
     ${UV_LIB}
     ${Z_LIB}
     ${CTP_MD_LIB}
     ${CTP_TRADER_LIB}
     ${ICU_LIB}
+    pthread
+    dl
+)
+
+add_executable(webctp-cli cli/main.cpp)
+
+target_include_directories(webctp-cli PRIVATE /usr/local/include)
+
+target_link_libraries(webctp-cli 
+    ${US_LIB}
+    ${UV_LIB}
+    ${Z_LIB}
     pthread
     dl
 )

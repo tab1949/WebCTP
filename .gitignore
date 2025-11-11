@@ -3,6 +3,7 @@ build
 node_modules
 dist
 *.local.*
+.cache
 
 # Prerequisites
 *.d

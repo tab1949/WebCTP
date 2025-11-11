@@ -21,9 +21,9 @@ class TraderHandler final: public CThostFtdcTraderSpi {
     using string = std::string;
 
 public:
-    TraderHandler(WebSocket* ws, uWS::Loop* loop, Logger* log): 
+    TraderHandler(WebSocket* ws, uWS::Loop* loop, Logger* log, const string& flow): 
         logger_(log), 
-        api_(CThostFtdcTraderApi::CreateFtdcTraderApi("./flow")), 
+        api_(CThostFtdcTraderApi::CreateFtdcTraderApi(flow.c_str())), 
         ws_(ws), loop_(loop), req_id_(1) {
         api_->RegisterSpi(this);
     }

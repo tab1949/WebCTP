@@ -19,8 +19,8 @@ namespace tabxx {
 class MarketDataHandler final: public CThostFtdcMdSpi {
     using string = std::string;
 public:
-    MarketDataHandler(WebSocket* ws, uWS::Loop* loop, Logger* logger):
-        api_(CThostFtdcMdApi::CreateFtdcMdApi("./flow")), 
+    MarketDataHandler(WebSocket* ws, uWS::Loop* loop, Logger* logger, const string& flow):
+        api_(CThostFtdcMdApi::CreateFtdcMdApi(flow.c_str())), 
         ws_(ws), loop_(loop), logger_(logger), req_id_(1) {
         api_->RegisterSpi(this);
     }

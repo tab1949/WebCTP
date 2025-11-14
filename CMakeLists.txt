@@ -15,13 +15,12 @@ find_library(ICU_LIB icuuc icudata)
 
 add_executable(webctp 
     src/main.cpp
+    src/WebSocketApp.cpp
     src/Encoding.cpp
     src/MessageHandler.cpp
     src/MarketData/Handler.cpp
     src/Trade/Handler.cpp
     src/Trade/Operations.cpp
-    src/SubProcess/SubProcess.cpp
-    src/WebSocketApp.cpp
 )
 
 target_include_directories(webctp PRIVATE /usr/local/include)
@@ -33,18 +32,6 @@ target_link_libraries(webctp
     ${CTP_MD_LIB}
     ${CTP_TRADER_LIB}
     ${ICU_LIB}
-    pthread
-    dl
-)
-
-add_executable(webctp-cli cli/main.cpp)
-
-target_include_directories(webctp-cli PRIVATE /usr/local/include)
-
-target_link_libraries(webctp-cli 
-    ${US_LIB}
-    ${UV_LIB}
-    ${Z_LIB}
     pthread
     dl
 )

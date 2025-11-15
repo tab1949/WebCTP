@@ -4,8 +4,6 @@
 #include <atomic>
 #include <cstring>
 #include <exception>
-#include <filesystem>
-#include <stdexcept>
 #include <string>
 
 #include <ThostFtdcTraderApi.h>
@@ -121,8 +119,8 @@ private:
         std::memcpy(mem, str.c_str(), str.size());
     }
 
-    inline void performed(int req_id, int err) {
-        send(TradeMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}});
+    inline void performed(int req_id, int err, const string& msg = "") {
+        send(TradeMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}, {"msg", msg}});
     }
 
     inline void send(json&& data) {

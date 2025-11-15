@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "Handler.hpp"
 
 namespace tabxx {
@@ -131,14 +133,17 @@ void TraderHandler::insertOrder(
     OrderPriceType price_type, TimeCondition time_condition,
     const string& memo,
     Hedge hedge) {
+    string report = "RECEIVED: " + instrument + " in " + exchange + " with ref '" + ref + "'";
     CThostFtdcInputOrderField f;
     clear(&f);
     switch (direction) {
     case Direction::BUY:
         f.Direction = THOST_FTDC_D_Buy;
+        report += " BUY";
         break;
     case Direction::SELL:
         f.Direction = THOST_FTDC_D_Sell;
+        report += " SELL";
         break;
     default:
         throw std::runtime_error("TraderHandler::insertOrder(): Unknown Buy/Sell Direction");
@@ -147,32 +152,41 @@ void TraderHandler::insertOrder(
     switch (offset) {
     case OrderOffset::OPEN:
         f.CombOffsetFlag[0] = THOST_FTDC_OF_Open;
+        report += " OPEN";
         break;
     case OrderOffset::CLOSE:
         f.CombOffsetFlag[0] = THOST_FTDC_OF_Close;
+        report += " CLOSE";
         break;
     case OrderOffset::CLOSE_TODAY:
         f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseToday;
+        report += " CLOSE_TODAY";
         break;
     case OrderOffset::CLOSE_YESTERDAY:
         f.CombOffsetFlag[0] = THOST_FTDC_OF_CloseYesterday;
+        report += " CLOSE_YESTERDAY";
         break;
     default:
         throw std::runtime_error("TraderHandler::insertOrder(): Unsupported Open/Close operation");
     }
+    report += " " + std::to_string(volume);
     switch (price_type) {
     case OrderPriceType::LIMITED:
         f.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
+        report += " LIMITED";
         break;
     case OrderPriceType::MARKET:
         f.OrderPriceType = THOST_FTDC_OPT_AnyPrice;
+        report += " MARKET";
         break;
     case OrderPriceType::LAST:
         f.OrderPriceType = THOST_FTDC_OPT_LastPrice;
+        report += " LAST";
         break;
     default:
         throw std::runtime_error("TraderHandler::insertOrder(): Unsupported Price Type");
     }
+    report += " at " + std::to_string(price);
     switch (hedge) {
     case Hedge::SPECULATION:
         f.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
@@ -183,9 +197,11 @@ void TraderHandler::insertOrder(
     switch (time_condition) {
     case TimeCondition::IMMEDIATE:
         f.TimeCondition = THOST_FTDC_TC_IOC;
+        report += " IMMEDIATELY";
         break;
     case TimeCondition::ONE_DAY:
         f.TimeCondition = THOST_FTDC_TC_GFD;
+        report += " ONE_DAY";
         break;
     default:
         throw std::runtime_error("TraderHandler::insertOrder(): Unsupported Time Condition");
@@ -207,7 +223,8 @@ void TraderHandler::insertOrder(
     int req_id = req_id_++;
     f.RequestID = req_id;
     auto ret = api_->ReqOrderInsert(&f, req_id);
-    performed(req_id, ret);
+    report += " returned " + std::to_string(ret);
+    performed(req_id, ret, report);
 }
     
 void TraderHandler::queryOrder() {

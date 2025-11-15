@@ -337,6 +337,23 @@ void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
     OrderPriceType opt;
     Hedge hedge;
     TimeCondition tc;
+    string report = "ACCEPTED: ";
+    report += pOrder->InstrumentID;
+    report += " in ";
+    report += pOrder->ExchangeID;
+    report += " with ref '";
+    report += pOrder->OrderRef;
+    report += "' ";
+    report += direction == Direction::BUY ? "BUY" : "SELL";
+    report += " ";
+    report += of == OrderOffset::OPEN ? "OPEN" : "CLOSE";
+    report += " ";
+    report += std::to_string(pOrder->VolumeTotal);
+    report += opt == OrderPriceType::LIMITED ? "LIMITED" : "MARKET";
+    report += " at ";
+    report += std::to_string(pOrder->LimitPrice);
+    report += " ";
+    report += tc == TimeCondition::IMMEDIATE ? "IMMEDIATELY" : "ONE_DAY";
     if (pOrder) {
         try {
             submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
@@ -361,7 +378,7 @@ void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
     send(status == OrderStatus::CANCELED ? TradeMsgCode::ORDER_DELETED: TradeMsgCode::ORDER_INSERTED,
         {
             {"code", 0},
-            {"msg", ""}
+            {"msg", report}
         },
         pOrder? json {
             {"broker_id", pOrder->BrokerID},

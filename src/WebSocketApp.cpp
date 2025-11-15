@@ -35,18 +35,26 @@ void WebSocketApp::init() {
             }
             catch (const std::exception& e) {
                 try {
-                    ws->send("Parse client message failed. \nMessage: " + string(msg) + "\nException: " + e.what());
-                } catch (...) {}
+                    ws->send(json {
+                        {"msg", "Parse client message failed. \nMessage: " + string(msg) + "\nException: " + e.what()}
+                    }.dump());
+                } catch (...) {
+                    logger_.error((string)"Failed to send message. Unsent: " + e.what(), "ws-md");
+                }
                 return;
             }
             try {
                 auto res = HandleMarketDataMessage(data, *ws->getUserData()->md);
                 if (!res.empty())
-                    ws->send(res);
+                    ws->send(json{{"msg", res}}.dump());
             } catch (const std::exception& e) {
                 try {
-                    ws->send("Error processing message: " + string(e.what()));
-                } catch (...) {}
+                    ws->send(json {
+                        {"msg", "Error processing message: " + string(e.what())}
+                    }.dump());
+                } catch (...) {
+                    logger_.error((string)"Failed to send message. Unsent: " + e.what(), "ws-md");
+                }
             }
         },
         .close = [&] (WebSocket* ws, int code, std::string_view msg) {
@@ -74,21 +82,27 @@ void WebSocketApp::init() {
             }
             catch (const std::exception& e) {
                 try {
-                    ws->send("Parse client message failed. \nMessage: " + std::string(msg) + "\nException: " + e.what());
+                    ws->send(json {
+                        {"msg", "Parse client message failed. \nMessage: " + std::string(msg) + "\nException: " + e.what()}
+                    }.dump());
                 } catch (...) {
-                    logger_.error("Failed to send message.", "ws-trade");
+                    logger_.error((string)"Failed to send message. Unsent: " + e.what(), "ws-trade");
                 }
                 return;
             }
             try {
                 auto res = HandleTraderMessage(data, *ws->getUserData()->trade);
                 if (!res.empty())
-                    ws->send(res);
+                    ws->send(json {
+                        {"msg", res}
+                    }.dump());
             } catch (const std::exception& e) {
                 try {
-                    ws->send("Error processing message: " + string(e.what()));
+                    ws->send(json {
+                        {"msg", "Error processing message: " + string(e.what())}
+                    }.dump());
                 } catch (...) {
-                    logger_.error("Failed to send message.", "ws-trade");
+                    logger_.error((string)"Failed to send message. Unsent: " + e.what(), "ws-trade");
                 }
             }
         },

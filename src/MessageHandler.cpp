@@ -252,6 +252,38 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"instrument\" type error (expected string).";
         t.deleteOrder(j["exchange"], j["instrument"], j["delete_ref"], j["order_sys_id"]);
         return "";
+    }},
+    {"query_instrument", [](cjr j, thr t) {
+        if (j.contains("exchange")) {
+            if (!j["exchange"].is_string())
+                return "Error: Field \"exchange\" type error (expected string).";
+            if (j.contains("instrument")) {
+                if (!j["instrument"].is_string())
+                    return "Error: Field \"instrument\" type error (expected string).";
+                if (j.contains("exchange_inst_id")) {
+                    if (!j["exchange_inst_id"].is_string())
+                        return "Error: Field \"exchange_inst_id\" type error (expected string).";
+                    if (j.contains("product_id")) {
+                        if (!j["product_id"].is_string())
+                            return "Error: Field \"product_id\" type error (expected string).";
+                        t.queryInstrument(j["exchange"], j["instrument"], j["exchange_inst_id"], j["product_id"]);
+                    }
+                    else {
+                        t.queryInstrument(j["exchange"], j["instrument"], j["exchange_inst_id"]);
+                    }
+                }
+                else {
+                    t.queryInstrument(j["exchange"], j["instrument"]);
+                }
+            }
+            else {
+                t.queryInstrument(j["exchange"]);
+            }
+        }
+        else {
+            t.queryInstrument();
+        }
+        return "";
     }}
 };
 

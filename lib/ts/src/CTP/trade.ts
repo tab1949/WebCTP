@@ -22,6 +22,7 @@ export class Trade {
     public onOrderInserted: (data: Message.OrderInserted) => void = () => {};
     public onOrderTraded: (data: Message.OrderTraded) => void = () => {};
     public onQueryOrder: (data: Message.QueryOrder) => void = () => {};
+    public onQueryInstrument: (data: Message.Instrument) => void = () => {};
     public onOrderDeleteReturnError: (data: Message.OrderDeleteReturnError) => void = () => {};
     public onOrderDeleteError: (data: Message.OrderDeleteError) => void = () => {};
     public onOrderDeleted: (data: Message.OrderDeleted) => void = () => {};
@@ -217,6 +218,29 @@ export class Trade {
                 delete_ref: delRef,
                 order_sys_id: orderSysID
             }
+        }));
+    }
+
+    public queryInstrument(exchange?: string, instrument?: string, exchangeInstID?: string, productID?: string) {
+        if (!this.ws) {
+            throw new Error("WebSocket is not connected");
+        }
+        const data: any = {};
+        if (exchange !== undefined) {
+            data.exchange = exchange;
+        }
+        if (instrument !== undefined) {
+            data.instrument = instrument;
+        }
+        if (exchangeInstID !== undefined) {
+            data.exchange_inst_id = exchangeInstID;
+        }
+        if (productID !== undefined) {
+            data.product_id = productID;
+        }
+        this.ws.send(JSON.stringify({
+            op: "query_instrument",
+            data: data
         }));
     }
 
@@ -540,6 +564,46 @@ export class Trade {
                         IsLast: data.info.is_last,
                     };
                     this.onQueryOrder(d);
+                }
+                break;
+            case Message.TradeMsgCode.QUERY_INSTRUMENT:
+                if (data.info) {
+                    const d: Message.Instrument = {
+                        RequestID: data.info.req_id,
+                        IsLast: data.info.is_last,
+                        ExchangeID: data.info.exchange_id,
+                        InstrumentName: data.info.instrument_name,
+                        ProductClass: data.info.product_class,
+                        DeliveryYear: data.info.delivery_year,
+                        DeliveryMonth: data.info.delivery_month,
+                        MaxMarketOrderVolume: data.info.max_market_order_volume,
+                        MinMarketOrderVolume: data.info.min_market_order_volume,
+                        MaxLimitOrderVolume: data.info.max_limit_order_volume,
+                        MinLimitOrderVolume: data.info.min_limit_order_volume,
+                        VolumeMultiple: data.info.volume_multiple,
+                        PriceTick: data.info.price_tick,
+                        CreateDate: data.info.create_date,
+                        OpenDate: data.info.open_date,
+                        ExpireDate: data.info.expire_date,
+                        StartDelivDate: data.info.start_deliv_date,
+                        EndDelivDate: data.info.end_deliv_date,
+                        InstLifePhase: data.info.inst_life_phase,
+                        IsTrading: data.info.is_trading,
+                        PositionType: data.info.position_type,
+                        PositionDateType: data.info.position_date_type,
+                        LongMarginRatio: data.info.long_margin_ratio,
+                        ShortMarginRatio: data.info.short_margin_ratio,
+                        MaxMarginSideAlgorithm: data.info.max_margin_side_algorithm,
+                        StrikePrice: data.info.strike_price,
+                        OptionsType: data.info.options_type,
+                        UnderlyingMultiple: data.info.underlying_multiple,
+                        CombinationType: data.info.combination_type,
+                        InstrumentID: data.info.instrument_id,
+                        ExchangeInstID: data.info.exchange_inst_id,
+                        ProductID: data.info.product_id,
+                        UnderlyingInstrID: data.info.underlying_instr_id,
+                    };
+                    this.onQueryInstrument(d);
                 }
                 break;
             case Message.TradeMsgCode.ORDER_DELETE_RETURN_ERROR:

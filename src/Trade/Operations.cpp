@@ -288,4 +288,16 @@ void TraderHandler::deleteOrder(const string& exchange, const string& instrument
     performed(req_id, ret);
 }
 
+void TraderHandler::queryInstrument(const string& exchange, const string& instrument, const string& exchange_inst_id, const string& product_id) {
+    CThostFtdcQryInstrumentField f;
+    clear(&f);
+    copy(f.ExchangeID, exchange);
+    copy(f.InstrumentID, instrument);
+    copy(f.ExchangeInstID, exchange_inst_id);
+    copy(f.ProductID, product_id);
+    int req_id = req_id_++;
+    auto ret = api_->ReqQryInstrument(&f, req_id);
+    performed(req_id, ret);
+}
+
 } // namespace tabxx

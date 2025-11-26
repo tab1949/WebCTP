@@ -49,7 +49,8 @@ export enum TradeMsgCode {
     QUERY_ORDER,
     ORDER_DELETE_ERROR,
     ORDER_DELETE_RETURN_ERROR,
-    ORDER_DELETED
+    ORDER_DELETED,
+    QUERY_INSTRUMENT
 }
 
 export const TradeMsgInfo: Record<TradeMsgCode, string> = {
@@ -73,7 +74,8 @@ export const TradeMsgInfo: Record<TradeMsgCode, string> = {
     [TradeMsgCode.QUERY_ORDER]: "Query Order",
     [TradeMsgCode.ORDER_DELETE_ERROR]: "Failed to delete order",
     [TradeMsgCode.ORDER_DELETE_RETURN_ERROR]: "Delete order returned error",
-    [TradeMsgCode.ORDER_DELETED]: "Order Deleted"
+    [TradeMsgCode.ORDER_DELETED]: "Order Deleted",
+    [TradeMsgCode.QUERY_INSTRUMENT]: "Query Instrument"
 }
 
 export interface MarketData {
@@ -420,4 +422,40 @@ export interface QueryOrder {
     TimeCondition: Flags.TimeCondition;
     ReqID: number;
     IsLast: boolean;
+}
+
+export interface Instrument {
+    RequestID: number;
+    IsLast: boolean;
+    ExchangeID: string;
+    InstrumentName: string;
+    ProductClass: string;
+    DeliveryYear: number;
+    DeliveryMonth: number;
+    MaxMarketOrderVolume: number;
+    MinMarketOrderVolume: number;
+    MaxLimitOrderVolume: number;
+    MinLimitOrderVolume: number;
+    VolumeMultiple: number;
+    PriceTick: number;
+    CreateDate: string;
+    OpenDate: string;
+    ExpireDate: string;
+    StartDelivDate: string;
+    EndDelivDate: string;
+    InstLifePhase: string;
+    IsTrading: number;
+    PositionType: string;
+    PositionDateType: string;
+    LongMarginRatio: number;
+    ShortMarginRatio: number;
+    MaxMarginSideAlgorithm: string;
+    StrikePrice: number;
+    OptionsType: string;
+    UnderlyingMultiple: number;
+    CombinationType: string;
+    InstrumentID: string;
+    ExchangeInstID: string;
+    ProductID: string;
+    UnderlyingInstrID: string;
 }

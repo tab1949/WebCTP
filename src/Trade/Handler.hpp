@@ -108,6 +108,11 @@ public:
     void OnErrRtnOrderAction(CThostFtdcOrderActionField*, CThostFtdcRspInfoField*) override;
     // OnRtnOrder() is defined
 
+    void queryInstrument(const string& exchange = "", const string& instrument = "", const string& exchange_inst_id = "", const string& product_id = "");
+    void OnRspQryInstrument(
+        CThostFtdcInstrumentField *pInstrument, 
+        CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+        
 private:
     template <typename T>
     inline void clear(T* mem) noexcept {

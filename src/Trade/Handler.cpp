@@ -593,4 +593,49 @@ void TraderHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 
 }
 
+void TraderHandler::OnRspQryInstrument(
+    CThostFtdcInstrumentField *pInstrument, 
+    CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
+    send(TradeMsgCode::QUERY_INSTRUMENT, pRspInfo,
+        pInstrument? json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast},
+            {"exchange_id", pInstrument->ExchangeID},
+            {"instrument_name", u8(pInstrument->InstrumentName)},
+            {"product_class", pInstrument->ProductClass},
+            {"delivery_year", pInstrument->DeliveryYear},
+            {"delivery_month", pInstrument->DeliveryMonth},
+            {"max_market_order_volume", pInstrument->MaxMarketOrderVolume},
+            {"min_market_order_volume", pInstrument->MinMarketOrderVolume},
+            {"max_limit_order_volume", pInstrument->MaxLimitOrderVolume},
+            {"min_limit_order_volume", pInstrument->MinLimitOrderVolume},
+            {"volume_multiple", pInstrument->VolumeMultiple},
+            {"price_tick", pInstrument->PriceTick},
+            {"create_date", pInstrument->CreateDate},
+            {"open_date", pInstrument->OpenDate},
+            {"expire_date", pInstrument->ExpireDate},
+            {"start_deliv_date", pInstrument->StartDelivDate},
+            {"end_deliv_date", pInstrument->EndDelivDate},
+            {"inst_life_phase", pInstrument->InstLifePhase},
+            {"is_trading", pInstrument->IsTrading},
+            {"position_type", pInstrument->PositionType},
+            {"position_date_type", pInstrument->PositionDateType},
+            {"long_margin_ratio", pInstrument->LongMarginRatio},
+            {"short_margin_ratio", pInstrument->ShortMarginRatio},
+            {"max_margin_side_algorithm", pInstrument->MaxMarginSideAlgorithm},
+            {"strike_price", pInstrument->StrikePrice},
+            {"options_type", pInstrument->OptionsType},
+            {"underlying_multiple", pInstrument->UnderlyingMultiple},
+            {"combination_type", pInstrument->CombinationType},
+            {"instrument_id", pInstrument->InstrumentID},
+            {"exchange_inst_id", pInstrument->ExchangeInstID},
+            {"product_id", pInstrument->ProductID},
+            {"underlying_instr_id", pInstrument->UnderlyingInstrID}
+        }: json {
+            {"req_id", nRequestID},
+            {"is_last", bIsLast}
+        }
+    );
+}
+
 } // namespace tabxx

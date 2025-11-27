@@ -723,4 +723,11 @@ export class Trade {
             }
         };
     }
+    
+    public disconnect() {
+        if (!this.ws)
+            return;
+        this.ws.close();
+        this.ws = undefined;
+    }
 }; // class Trade

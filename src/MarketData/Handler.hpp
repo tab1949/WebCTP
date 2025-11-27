@@ -27,13 +27,14 @@ public:
 
     ~MarketDataHandler() {
         api_->Release();
+        logger_->info("Market Data API Released", "destructor");
     }
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void connect(const std::string& addr) {
         char front[64];
-        std::memset(front, sizeof(front), 0);
+        clear(front);
         copy(front, addr);
         api_->RegisterFront(front);
         api_->Init();
@@ -57,16 +58,8 @@ public:
         CThostFtdcRspUserLoginField *pRspUserLogin, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    // This operation is not supported by CTP
-    // void logout(const std::string& user_id, const std::string& broker_id) {
-        // CThostFtdcUserLogoutField f;
-        // clear(&f);
-        // copy(f.BrokerID, broker_id);
-        // copy(f.UserID, user_id);
-        // int req = req_id_++;
-        // auto ret = api_->ReqUserLogout(&f, req);
-        // performed(req, ret);
-    // }
+    // Logout is not supported by CTP
+    
     void OnRspUserLogout(
         CThostFtdcUserLogoutField *pUserLogout, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;

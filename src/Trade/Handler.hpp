@@ -28,6 +28,7 @@ public:
     
     ~TraderHandler() {
         api_->Release();
+        logger_->info("Trade API Released", "destructor");
     }
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;

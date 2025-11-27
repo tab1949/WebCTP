@@ -40,7 +40,8 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
-    
+    "resolveJsonModule": true
   }
 }

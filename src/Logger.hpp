@@ -50,20 +50,26 @@ protected:
             std::tm* now = std::gmtime(&time);
 
             std::string lv;
+            const char* color_start = "";
+            constexpr const char* color_reset = "\033[0m";
             switch (level) {
             case 0:
                 lv = "INFO ";
+                color_start = "\033[32m";
                 break;
             case 1:
                 lv = "WARN ";
+                color_start = "\033[33m";
                 break;
             case 2:
                 lv = "ERROR";
+                color_start = "\033[31m";
                 break;
             default:
                 lv = "?   ";
+                color_start = "\033[36m";
             }
-            ss << "[UTC " << now->tm_year+1900 << '-' << now->tm_mon+1 << '-' << now->tm_mday << ' ' << now->tm_hour << ':' << now->tm_min << ':' << now->tm_sec << "] [" << lv << "] [" << scope << "] " << str << std::endl;
+            ss << "[UTC " << now->tm_year+1900 << '-' << now->tm_mon+1 << '-' << now->tm_mday << ' ' << now->tm_hour << ':' << now->tm_min << ':' << now->tm_sec << "] [" << color_start << lv << color_reset << "] [" << scope << "] " << str << std::endl;
             std::cout.write(ss.str().c_str(), ss.str().size());
             if (file_)
                 file_->write(ss.str().c_str(), ss.str().size());

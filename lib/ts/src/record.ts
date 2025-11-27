@@ -1,9 +1,11 @@
 import * as CTP from "./CTP";
 import * as fs from "fs";
 import config from "./test.config.local.json";
+import { spawn, spawnSync } from "child_process";
 
 const md = new CTP.MarketData(config.client.broker_id, config.client.user_id);
 const trade = new CTP.Trade(config.client.broker_id, config.client.user_id);
+let trading_day: string = '';
 
 md.setFront(config.front.addr_md, config.front.port_md);
 trade.setFront(config.front.addr_trade, config.front.port_trade);
@@ -63,12 +65,14 @@ trade.onAuthenticate = (data) => {
 trade.onLogin = (data) => {
     console.log("Trade Logged in. Message:", data);
     if (data.info && data.info.trading_day) {
-        const trading_day = data.info.trading_day;
+        trading_day = data.info.trading_day;
         console.log("Trading day: " + trading_day);
         if (!fs.existsSync('/var/lib/webctp'))
             fs.mkdirSync('/var/lib/webctp');
         if (!fs.existsSync('/var/lib/webctp/record'))
             fs.mkdirSync('/var/lib/webctp/record');
+        if (!fs.existsSync('/var/lib/webctp/record/archived'))
+            fs.mkdirSync('/var/lib/webctp/record/archived');
         if (!fs.existsSync(`/var/lib/webctp/record/${trading_day}`))
             fs.mkdirSync(`/var/lib/webctp/record/${trading_day}`);
     }
@@ -144,8 +148,8 @@ setInterval(() => {
         md.connect(config.webctp.addr, config.webctp.port);
         return;
     }
-    // 15:30 Unsubscribe, Logout, Disconnect
-    if (hours === 15 && minutes === 30) {
+    // 15:10 Unsubscribe, Logout, Disconnect
+    if (hours === 15 && minutes === 10) {
         console.log("Attempt to disconnect...");
         if (instruments.length > 0) {
             md.unsubscribe(instruments);
@@ -154,6 +158,9 @@ setInterval(() => {
         trade.logout(config.client.user_id);
         trade.disconnect();
         md.disconnect();
+        spawnSync('tar', ['-cf', `/var/lib/webctp/record/archived/${trading_day}.tar`, `/var/lib/webctp/record/${trading_day}`]);
+        spawn('rm', ['-r', `/var/lib/webctp/record/${trading_day}`]);
+        spawn('gzip', ['-9', `/var/lib/webctp/record/archived/${trading_day}.tar`]);
         return;
     }
     // 20:50 Login

@@ -19,8 +19,6 @@ export class MarketData {
     private tradingDay: string | undefined;
     private brokerID: string;
     private userID: string;
-    private frontAddr: string | undefined;
-    private frontPort: string | undefined;
 
     constructor(brokerID: string = "", userID: string = "") {
         this.brokerID = brokerID;
@@ -39,15 +37,7 @@ export class MarketData {
         }));
     }
 
-    public setFront(addr: string, port: string) {
-        this.frontAddr = addr;
-        this.frontPort = port;
-    }
-
     public connect(addr: string, port: string) {
-        if (!this.frontAddr || !this.frontPort) {
-            throw new Error("Front address or port not set");
-        }
         if (this.ws) {
             return;
         }
@@ -162,15 +152,6 @@ export class MarketData {
             default:
                 if (data.status && data.status == "ready") {
                     this.onInit(data);
-                    if (this.ws) {
-                        this.ws.send(JSON.stringify({
-                            op: "connect",
-                            data: {
-                                addr: this.frontAddr,
-                                port: this.frontPort
-                            }
-                        }));
-                    }
                     break;
                 }
                 throw new Error("Unknown message: " + JSON.stringify(data));

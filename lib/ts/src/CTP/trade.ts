@@ -28,8 +28,6 @@ export class Trade {
     public onOrderDeleted: (data: Message.OrderDeleted) => void = () => {};
     private brokerID: string;
     private investorID: string;
-    private frontAddr: string | undefined;
-    private frontPort: string | undefined;
     private ws: ws.WebSocket | undefined;
     private tradingDay: string | undefined;
 
@@ -254,17 +252,9 @@ export class Trade {
         }));
     }
 
-    public setFront(addr: string, port: string) {
-        this.frontAddr = addr;
-        this.frontPort = port;
-    }
-
     public connect(addr: string, port: string) {
         if (this.ws) 
             return;
-        if (!this.frontAddr || !this.frontPort) {
-            throw new Error("Front address or port not set");
-        }
         this.ws = new ws.WebSocket(`ws://${addr}:${port}/trade`);
         this.ws.onclose = () => {
             this.ws = undefined;
@@ -708,15 +698,6 @@ export class Trade {
             default:
                 if (data.status && data.status == "ready") {
                     this.onInit(data);
-                    if (this.ws) {
-                        this.ws.send(JSON.stringify({
-                            op: "connect",
-                            data: {
-                                addr: this.frontAddr,
-                                port: this.frontPort
-                            }
-                        }));
-                    }
                     break;
                 }
                 throw new Error("Unknown message: " + JSON.stringify(data));

@@ -7,21 +7,41 @@ const md = new CTP.MarketData(config.client.broker_id, config.client.user_id);
 const trade = new CTP.Trade(config.client.broker_id, config.client.user_id);
 let trading_day: string = '';
 
-md.setFront(config.front.addr_md, config.front.port_md);
-trade.setFront(config.front.addr_trade, config.front.port_trade);
+// Global safety nets: log and keep process alive
+process.on('uncaughtException', (err) => {
+    console.error('[uncaughtException]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[unhandledRejection]', reason);
+});
 
-md.onInit = (d) => {
+const safeFunc = <T extends any[]>(fn: (...args: T) => any) => {
+    return (...args: T) => {
+        try { return fn(...args); } catch (e) { console.error('[handler error]', e); }
+    };
+};
+
+const ensureDir = (dir: string) => {
+    try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { console.error('[ensureDir]', dir, e); }
+};
+
+
+md.onInit = safeFunc((d) => {
     console.log("Connected to WebCTP server (MarketData), info:", d);
-}
+});
 
-md.onConnected = (d) => {
+md.onConnected = safeFunc((d) => {
     console.log("Connected to front.");
-    md.login(config.client.password);
-}
+    try { 
+        md.login(config.client.password); 
+    } catch (e) {
+        console.error('[md.login]', e); 
+    }
+});
 
-md.onLogin = (d) => {
+md.onLogin = safeFunc((d) => {
     console.log("MarketData Login.");
-}
+});
 
 md.onMarketData = async (d) => {
     const filename = `/var/lib/webctp/record/${d.TradingDay}/${d.InstrumentID}.csv`;
@@ -35,151 +55,214 @@ md.onMarketData = async (d) => {
     }
 }
 
-trade.onInit = (d) => {
+trade.onInit = safeFunc((d) => {
     console.log("Connected to WebCTP server (Trading), info:", d);
-}
+});
 
-trade.onError = (data) => {
+trade.onError = safeFunc((data) => {
     console.error("Trade API Error:", data);
-};
+});
 
-trade.onConnected = (data) => {
+trade.onConnected = safeFunc((data) => {
     console.log("Connected to CTP.");
-    trade.set(config.client.broker_id, config.client.user_id);
-    trade.auth(config.client.user_id, config.client.app_id, config.client.auth_code);
-};
+    try {
+        trade.set(config.client.broker_id, config.client.user_id);
+        trade.auth(config.client.user_id, config.client.app_id, config.client.auth_code);
+    } catch (e) { 
+        console.error('[trade.set/auth]', e); 
+    }
+});
 
-trade.onTradingDay = (data) => {
+trade.onTradingDay = safeFunc((data) => {
     console.log("Trading day: " + data.info.trading_day);
-};
+});
 
-trade.onDisconnected = (data) => {
+trade.onDisconnected = safeFunc((data) => {
     console.log("Disconnected. Message:", data);
-};
+});
 
-trade.onAuthenticate = (data) => {
+trade.onAuthenticate = safeFunc((data) => {
     console.log("Authenticated. Message:", data);
-    trade.login(config.client.user_id, config.client.password);
-};
+    try { 
+        trade.login(config.client.user_id, config.client.password); 
+    } catch (e) { 
+        console.error('[trade.login]', e); 
+    }
+});
 
-trade.onLogin = (data) => {
+trade.onLogin = safeFunc((data) => {
     console.log("Trade Logged in. Message:", data);
     if (data.info && data.info.trading_day) {
         trading_day = data.info.trading_day;
         console.log("Trading day: " + trading_day);
-        if (!fs.existsSync('/var/lib/webctp'))
-            fs.mkdirSync('/var/lib/webctp');
-        if (!fs.existsSync('/var/lib/webctp/record'))
-            fs.mkdirSync('/var/lib/webctp/record');
-        if (!fs.existsSync('/var/lib/webctp/record/archived'))
-            fs.mkdirSync('/var/lib/webctp/record/archived');
-        if (!fs.existsSync(`/var/lib/webctp/record/${trading_day}`))
-            fs.mkdirSync(`/var/lib/webctp/record/${trading_day}`);
+        try {
+            ensureDir('/var/lib/webctp');
+            ensureDir('/var/lib/webctp/record');
+            ensureDir('/var/lib/webctp/record/archived');
+            ensureDir(`/var/lib/webctp/record/${trading_day}`);
+        } catch (e) { 
+            console.error('[mkdir]', e); 
+        }
     }
     const utc8Time = new Date((new Date()).getTime() + (8 * 60 * 60 * 1000) - (24 * 60 * 60 * 1000));
     const year = utc8Time.getUTCFullYear();
     const month = String(utc8Time.getUTCMonth() + 1).padStart(2, '0');
     const day = String(utc8Time.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    trade.querySettlementInfo(dateStr);
-};
-
-trade.onLogout = (data) => {
-    console.log("Logged out. Message:", data);
-};
-
-trade.onSettlementInfo = (data) => {
-    if (data.Content)
-        console.log("Settlement info: \n" + JSON.stringify(data.Content).replace(/\\r\\n/g, "\n"));
-    if (data.IsLast) {
-        trade.confirmSettlementInfo();
+    try { 
+        trade.querySettlementInfo(dateStr); 
+    } catch (e) { 
+        console.error('[querySettlementInfo]', e); 
     }
-};
+});
 
-trade.onSettlementInfoConfirm = (data) => {
+trade.onLogout = safeFunc((data) => {
+    console.log("Logged out. Message:", data);
+});
+
+trade.onSettlementInfo = safeFunc((data) => {
+    try {
+        if (data?.Content)
+            console.log("Settlement info: \n" + JSON.stringify(data.Content).replace(/\\r\\n/g, "\n"));
+        if (data?.IsLast) {
+            trade.confirmSettlementInfo();
+        }
+    } catch (e) { 
+        console.error('[onSettlementInfo]', e); 
+    }
+});
+
+trade.onSettlementInfoConfirm = safeFunc((data) => {
     console.log("Settlement info confirmed:", data);
-    trade.queryInstrument();
-    // md.subscribe(['jm2601'])
-};
+    try { 
+        trade.queryInstrument(); 
+    } catch (e) { 
+        console.error('[queryInstrument]', e); 
+    }
+});
 
 const instruments: string[] = [];
 
-trade.onQueryInstrument = (data) => {
-    if (data.UnderlyingInstrID.length <= 2)
-        instruments.push(data.InstrumentID);
-    if (data.IsLast) {
-        instruments.forEach((v) => {
-            md.subscribe([v]);
-        });
+trade.onQueryInstrument = safeFunc((data) => {
+    try {
+        if (data.UnderlyingInstrID.length <= 2 && data.InstrumentID)
+            instruments.push(data.InstrumentID);
+        if (data.IsLast) {
+            instruments.forEach((v) => {
+                try { 
+                    md.subscribe([v]); 
+                } catch (e) { 
+                    console.error('[md.subscribe]', v, e); 
+                }
+            });
+        }
+    } catch (e) { 
+        console.error('[onQueryInstrument]', e); 
     }
-}
+});
 
-trade.connect(config.webctp.addr, config.webctp.port);
-md.connect(config.webctp.addr, config.webctp.port);
+const stop = () => {
+    if (instruments.length > 0) {
+        try { 
+            md.unsubscribe(instruments); 
+        } catch (e) { console.error('[md.unsubscribe]', e); }
+        instruments.length = 0;
+    }
+
+    try { 
+        trade.logout(config.client.user_id); 
+    } catch (e) { console.error('[trade.logout]', e); }
+
+    try { 
+        trade.disconnect(); 
+    } catch (e) { console.error('[trade.disconnect]', e); }
+
+    try { 
+        md.disconnect(); 
+    } catch (e) { console.error('[md.disconnect]', e); }
+};
+
+const connect = () => {
+    try { 
+        trade.connect(config.webctp.addr, config.webctp.port); 
+        trade.connectFront(config.front.addr_trade, config.front.port_trade);
+    } catch (e) { console.error('[trade.connect]', e); }
+
+    try { 
+        md.connect(config.webctp.addr, config.webctp.port); 
+        md.connectFront(config.front.addr_md, config.front.port_md);
+    } catch (e) { console.error('[md.connect]', e); }
+    
+};
+
+// TODO: If it is not trading time now, do not connect. Otherwise, connect immediately.
+
 
 setInterval(() => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    try {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
 
-    // 8:40 Login
-    if (hours === 8 && minutes === 40) {
-        console.log("Attempt to connect...");
-        trade.connect(config.webctp.addr, config.webctp.port);
-        md.connect(config.webctp.addr, config.webctp.port);
-        return;
-    }
-    // 11:40 Unsubscribe, Logout, Disconnect
-    if (hours === 11 && minutes === 40) {
-        console.log("Attempt to disconnect...");
-        if (instruments.length > 0) {
-            md.unsubscribe(instruments);
-            instruments.length = 0;
+        // 8:40 Login
+        if (hours === 8 && minutes === 40) {
+            console.log("Attempt to connect...");
+            connect();
+            return;
         }
-        trade.logout(config.client.user_id);
-        trade.disconnect();
-        md.disconnect();
-        return;
-    }
-    // 13:20 Login
-    if (hours === 13 && minutes === 20) {
-        console.log("Attempt to connect...");
-        trade.connect(config.webctp.addr, config.webctp.port);
-        md.connect(config.webctp.addr, config.webctp.port);
-        return;
-    }
-    // 15:10 Unsubscribe, Logout, Disconnect
-    if (hours === 15 && minutes === 10) {
-        console.log("Attempt to disconnect...");
-        if (instruments.length > 0) {
-            md.unsubscribe(instruments);
-            instruments.length = 0;
+        // 11:40 Unsubscribe, Logout, Disconnect
+        if (hours === 11 && minutes === 40) {
+            console.log("Attempt to pause...");
+            stop();
+            return;
         }
-        trade.logout(config.client.user_id);
-        trade.disconnect();
-        md.disconnect();
-        spawnSync('tar', ['-cf', `/var/lib/webctp/record/archived/${trading_day}.tar`, `/var/lib/webctp/record/${trading_day}`]);
-        spawn('rm', ['-r', `/var/lib/webctp/record/${trading_day}`]);
-        spawn('gzip', ['-9', `/var/lib/webctp/record/archived/${trading_day}.tar`]);
-        return;
-    }
-    // 20:50 Login
-    if (hours === 20 && minutes === 50) {
-        console.log("Attempt to connect...");
-        trade.connect(config.webctp.addr, config.webctp.port);
-        md.connect(config.webctp.addr, config.webctp.port);
-        return;
-    }
-    // 2:40 Unsubscribe, Logout, Disconnect
-    if (hours === 2 && minutes === 40) {
-        console.log("Attempt to disconnect...");
-        if (instruments.length > 0) {
-            md.unsubscribe(instruments);
-            instruments.length = 0;
+        // 13:20 Login
+        if (hours === 13 && minutes === 20) {
+            console.log("Attempt to connect...");
+            connect();
+            return;
         }
-        trade.logout(config.client.user_id);
-        trade.disconnect();
-        md.disconnect();
-        return;
+        // 15:10 Unsubscribe, Logout, Disconnect
+        if (hours === 15 && minutes === 10) {
+            console.log("Attempt to pause...");
+            stop();
+
+            try {
+                const tarRes = spawnSync('tar', ['-cf', `/var/lib/webctp/record/archived/${trading_day}.tar`, `/var/lib/webctp/record/${trading_day}`]);
+                if (tarRes.error) 
+                    console.error('[tar error]', tarRes.error);
+            } catch (e) { console.error('[tar spawnSync]', e); }
+
+            try {
+                const rmProc = spawn('rm', ['-r', `/var/lib/webctp/record/${trading_day}`]);
+                rmProc.on('error', (e) => console.error('[rm error]', e));
+                rmProc.on('close', (code, signal) => console.log('[rm close]', code, signal));
+            } catch (e) { console.error('[rm spawn]', e); }
+
+            try {
+                const gzProc = spawn('gzip', ['-9', `/var/lib/webctp/record/archived/${trading_day}.tar`]);
+                gzProc.on('error', (e) => console.error('[gzip error]', e));
+                gzProc.on('close', (code, signal) => console.log('[gzip close]', code, signal));
+            } catch (e) { console.error('[gzip spawn]', e); }
+
+            return;
+        }
+        // 20:50 Login
+        if (hours === 20 && minutes === 50) {
+            console.log("Attempt to connect...");
+            connect();
+            return;
+        }
+        // 2:40 Unsubscribe, Logout, Disconnect
+        if (hours === 2 && minutes === 40) {
+            console.log("Attempt to pause...");
+            stop();
+            return;
+        }
+    } catch (e) {
+        console.error('[setInterval error]', e);
     }
 }, 1000 * 60);
+
+process.on('SIGINT', stop);
+process.on('SIGTERM', stop);

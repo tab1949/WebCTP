@@ -29,10 +29,8 @@ export class MarketData {
         this.ws?.send(JSON.stringify({
             op: "connect",
             data: {
-                front: {
-                    address: addr,
-                    port: port
-                }
+                addr: addr,
+                port: port
             }
         }));
     }

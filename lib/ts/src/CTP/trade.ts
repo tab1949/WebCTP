@@ -243,7 +243,9 @@ export class Trade {
     }
 
     public connectFront(addr: string, port: string) {
-        this.ws?.send(JSON.stringify({
+        if (!this.ws) 
+            return;
+        this.ws.send(JSON.stringify({
             op: "connect",
             data: {
                 addr: addr,

@@ -9,6 +9,7 @@ void TraderHandler::connect(const string& addr, const string& port) {
     clear(a);
     string str = string("tcp://" + addr + ":" + port);
     copy(a, str);
+    info("Client attempting to connect to Trade front: "_s + str);
     api_->RegisterFront(a);
     api_->Init();
     performed(0, 0);
@@ -21,6 +22,7 @@ void TraderHandler::setBrokerID(const std::string& broker_id) {
         return;
     }
     broker_id_ = broker_id;
+    info("Client set BrokerID to: "_s + broker_id);
     performed(req, 0);
 }
 
@@ -31,12 +33,15 @@ void TraderHandler::setInvestorID(const std::string& investor_id) {
         return;
     }
     investor_id_ = investor_id;
+    info("Client set InvestorID to: "_s + investor_id);
     performed(req, 0);
 }
 
 void TraderHandler::getTradingDay() {
+    auto trading_day = api_->GetTradingDay();
+    info("Client query TradingDay. Trading Day: "_s + std::string(trading_day));
     send(TradeMsgCode::TRADING_DAY, {}, {
-        {"trading_day", api_->GetTradingDay()}
+        {"trading_day", trading_day}
     });
 }
 
@@ -49,6 +54,7 @@ void TraderHandler::auth(const string& user_id, const string& app_id, const stri
     copy(f.UserID, user_id);
     int req_id = req_id_++;
     int err = api_->ReqAuthenticate(&f, req_id);
+    info("Client sent authentication request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(err));
     performed(req_id, err);
 }
 
@@ -60,6 +66,7 @@ void TraderHandler::login(const std::string& user_id, const std::string& passwor
     copy(f.Password, password);
     int req_id = req_id_ ++;
     auto ret = api_->ReqUserLogin(&f, req_id);
+    info("Client sent login request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -70,6 +77,7 @@ void TraderHandler::logout(const std::string& user_id) {
     copy(f.UserID, user_id);
     int req_id = req_id_++;
     auto ret = api_->ReqUserLogout(&f, req_id);
+    info("Client sent logout request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -86,6 +94,7 @@ void TraderHandler::querySettlementInfo(
     copy(f.TradingDay, trading_day);
     int req_id = req_id_++;
     auto ret = api_->ReqQrySettlementInfo(&f, req_id);
+    info("Client sent settlement info query request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -106,6 +115,7 @@ void TraderHandler::confirmSettlementInfo(
     f.SettlementID = settlement_id;
     int req_id = req_id_ ++;
     auto ret = api_->ReqSettlementInfoConfirm(&f, req_id);
+    info("Client sent settlement info confirm request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -122,6 +132,7 @@ void TraderHandler::queryTradingAccount(
     f.BizType = biz_type;
     int req_id = req_id_++;
     auto ret = api_->ReqQryTradingAccount(&f, req_id);
+    info("Client sent trading account query request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -224,6 +235,7 @@ void TraderHandler::insertOrder(
     f.RequestID = req_id;
     auto ret = api_->ReqOrderInsert(&f, req_id);
     report += " returned " + std::to_string(ret);
+    info("Client sent order insert request. ReqID: "_s + std::to_string(req_id) + "; Details: " + report);
     performed(req_id, ret, report);
 }
     
@@ -234,6 +246,7 @@ void TraderHandler::queryOrder() {
     copy(f.InvestorID, investor_id_);
     int req_id = req_id_++;
     auto ret = api_->ReqQryOrder(&f, req_id);
+    info("Client sent order query request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -245,6 +258,7 @@ void TraderHandler::queryOrderByID(const string& sysID) {
     copy(f.OrderSysID, sysID);
     int req_id = req_id_++;
     auto ret = api_->ReqQryOrder(&f, req_id);
+    info("Client sent order query by ID request. OrderSysID: " + sysID + "; ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -256,6 +270,7 @@ void TraderHandler::queryOrderByExchange(const string& ex) {
     copy(f.ExchangeID, ex);
     int req_id = req_id_++;
     auto ret = api_->ReqQryOrder(&f, req_id);
+    info("Client sent order query by Exchange request. ExchangeID: " + ex + "; ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -268,6 +283,7 @@ void TraderHandler::queryOrderByRange(const string& from, const string& to) {
     copy(f.InsertTimeEnd, to);
     int req_id = req_id_++;
     auto ret = api_->ReqQryOrder(&f, req_id);
+    info("Client sent order query by Range request. From: " + from + "; To: " + to + "; ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -285,6 +301,7 @@ void TraderHandler::deleteOrder(const string& exchange, const string& instrument
     copy(f.OrderSysID, sysID);
     f.RequestID = req_id;
     auto ret = api_->ReqOrderAction(&f, req_id);
+    info("Client sent order delete request. OrderActionRef: " + delRef + "; ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 
@@ -297,6 +314,7 @@ void TraderHandler::queryInstrument(const string& exchange, const string& instru
     copy(f.ProductID, product_id);
     int req_id = req_id_++;
     auto ret = api_->ReqQryInstrument(&f, req_id);
+    info("Client sent instrument query request. Exchange: "_s + (exchange.empty()? "ALL": exchange) + "; Instrument: " + (instrument.empty()? "ALL": instrument) + "; ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
     performed(req_id, ret);
 }
 

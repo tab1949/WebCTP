@@ -58,7 +58,7 @@ void WebSocketApp::init() {
             }
         },
         .close = [&] (WebSocket* ws, int code, std::string_view msg) {
-            logger_.warn("A MarketData connection has been closed, message: " + string(msg) + ", code: " + std::to_string(code), "ws");
+            logger_.warn("A MarketData connection has been closed, message: " + string(msg) + ", code: " + std::to_string(code));
         },
     })
     .ws("/trade", uWS::App::WebSocketBehavior<WSContext> {
@@ -107,16 +107,16 @@ void WebSocketApp::init() {
             }
         },
         .close = [&] (WebSocket* ws, int code, std::string_view msg) {
-            logger_.warn("A connection has been closed, message: " + string(msg) + ", code: " + std::to_string(code), "ws");
+            logger_.warn("A connection has been closed, message: " + string(msg) + ", code: " + std::to_string(code));
         },
     })
     .listen(std::stoi(port_), [&] (auto* s) {
         if (!s) {
-            logger_.error("Listen port " + port_ + "failed", "ws");
+            logger_.error("Listen port " + port_ + "failed");
             app_.close();
             return;
         }
-        logger_.info("Server started.", "ws");
+        logger_.info("Server started.");
     });
 }
 

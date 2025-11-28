@@ -27,7 +27,7 @@ public:
 
     ~MarketDataHandler() {
         api_->Release();
-        logger_->info("Market Data API Released", "destructor");
+        info("Market Data API Released");
     }
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
@@ -36,6 +36,7 @@ public:
         char front[64];
         clear(front);
         copy(front, addr);
+        info("Client attempting to connect to Market Data front: "_s + addr);
         api_->RegisterFront(front);
         api_->Init();
         performed(0, 0);
@@ -52,6 +53,7 @@ public:
         copy(f.Password, password);
         int req_id = req_id_++;
         auto ret = api_->ReqUserLogin(&f, req_id);
+        info("Sent login request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
         performed(req_id, ret);
     }
     void OnRspUserLogin(
@@ -65,13 +67,15 @@ public:
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void getTradingDay() {
+        auto trading_day = api_->GetTradingDay();
+        info("Client query Trading Day. Trading Day: "_s + std::string(trading_day));
         send(MDMsgCode::TRADING_DAY, 
             json {
                 {"code", 0},
                 {"msg", ""}
             },
             json {
-                {"trading_day", api_->GetTradingDay()}
+                {"trading_day", trading_day}
             }   
         );
     }
@@ -82,7 +86,9 @@ public:
             mem.emplace_back(i.c_str());
         }
         auto ret = api_->SubscribeMarketData((char**)mem.data(), mem.size());
-        performed(req_id_++, ret);
+        auto req = req_id_++;
+        info("Client subscribed to Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
+        performed(req, ret);
     }
     void OnRspSubMarketData(
         CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
@@ -95,7 +101,9 @@ public:
             mem.emplace_back(i.c_str());
         }
         auto ret = api_->UnSubscribeMarketData((char**)mem.data(), mem.size());
-        performed(req_id_++, ret);
+        auto req = req_id_++;
+        info("Client unsubscribed from Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
+        performed(req, ret);
     }
     void OnRspUnSubMarketData(
         CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
@@ -110,6 +118,24 @@ private:
     template <typename T>
     inline void copy(T* mem, const string& str) noexcept {
         std::memcpy(mem, str.c_str(), str.size());
+    }
+
+    inline void info(const string& s) {
+        if (logger_) {
+            logger_->info(s, "market-data");
+        }
+    }
+
+    inline void warn(const string& s) {
+        if (logger_) {
+            logger_->warn(s, "market-data");
+        }
+    }
+
+    inline void error(const string& s) {
+        if (logger_) {
+            logger_->error(s, "market-data");
+        }
     }
 
     inline void performed(int req_id, int err) {

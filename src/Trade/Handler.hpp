@@ -125,6 +125,24 @@ private:
         std::memcpy(mem, str.c_str(), str.size());
     }
 
+    inline void info(const string& s) {
+        if (logger_) {
+            logger_->info(s, "trade");
+        }
+    }
+
+    inline void warn(const string& s) {
+        if (logger_) {
+            logger_->warn(s, "trade");
+        }
+    }
+
+    inline void error(const string& s) {
+        if (logger_) {
+            logger_->error(s, "trade");
+        }
+    }
+
     inline void performed(int req_id, int err, const string& msg = "") {
         send(TradeMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}, {"msg", msg}});
     }

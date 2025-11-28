@@ -14,6 +14,7 @@ struct execConfig {
     string addr = "localhost";
     string port = "8888";
     string flow = "./flow";
+    string log = "";
 };
 
 int parseArgs(int argc, char** args, execConfig& config);
@@ -22,11 +23,12 @@ int main(int argc, char** args) {
     execConfig config;
     int ret = parseArgs(argc, args, config);
     if (ret != 0) {
-        return ret;
+        return ret; 
     }
+    
 
     try {
-        WebSocketApp app(config.addr, config.port, config.flow);
+        WebSocketApp app(config.addr, config.port, config.flow, config.log);
         app.run();
         return 0;
     } catch (const std::exception& e) {
@@ -36,13 +38,14 @@ int main(int argc, char** args) {
 }
 
 const char * hint = 
-"Usage: WebCTP [-m <mode>] [-a <address>] [-p <port>] [-f <flow>] [-h|-v]\n"
+"Usage: WebCTP [-m <mode>] [-a <address>] [-p <port>] [-f <flow>] [-l <log>] [-h|-v]\n"
 "Options:\n"
 "  -h, --help       Display this help message and exit\n"
 "  -v, --version    Display the version information and exit\n"
 "  -a, --addr       Specify the address to listen on (default: localhost)\n"
 "  -p, --port       Specify the port to listen on (default: 8888)\n"
-"  -f, --flow       Specify the flow directory (default: ./flow)";
+"  -f, --flow       Specify the flow directory (default: ./flow)\n"
+"  -l, --log        Specify the path log files (default: no file logging)";
 
 
 int parseArgs(int argc, char** args, execConfig& config) {
@@ -70,6 +73,15 @@ int parseArgs(int argc, char** args, execConfig& config) {
         else if (arg == "-p" || arg == "--port") {
             if (i + 1 < argc) {
                 config.port = args[++i];
+            } else {
+                std::cerr << "Error: Option " << arg << " requires an argument." << std::endl;
+                std::cerr << hint << std::endl;
+                return 1;
+            }
+        }
+        else if (arg == "-l" || arg == "--log") {
+            if (i + 1 < argc) {
+                config.log = args[++i];
             } else {
                 std::cerr << "Error: Option " << arg << " requires an argument." << std::endl;
                 std::cerr << hint << std::endl;

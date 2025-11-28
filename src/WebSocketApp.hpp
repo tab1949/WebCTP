@@ -11,8 +11,8 @@ using std::string;
 
 class WebSocketApp {
 public:
-    WebSocketApp(const string& addr, const string& port, const string& flow):
-        addr_(addr), port_(port), flow_(flow) {
+    WebSocketApp(const string& addr, const string& port, const string& flow, const string& log = ""):
+        logger_(makeLogger(log)), addr_(addr), port_(port), flow_(flow) {
         try {
             init();
         } catch (const std::exception& e) {
@@ -30,6 +30,14 @@ public:
     }
 
 private:
+    static Logger makeLogger(const string& log) {
+        if (log.empty()) {
+            return Logger("ws-app");
+        } else {
+            return Logger(log, "ws-app");
+        }
+    }
+    
     void init();
 
 private:

@@ -195,8 +195,50 @@ const connect = () => {
     
 };
 
-// TODO: If it is not trading time now, do not connect. Otherwise, connect immediately.
+// Check if current time is within trading hours
+const isTradingTime = (): boolean => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
 
+    // Morning session: 8:40 - 11:40
+    const morningStart = 8 * 60 + 40;  // 8:40
+    const morningEnd = 11 * 60 + 40;   // 11:40
+
+    // Afternoon session: 13:20 - 15:10
+    const afternoonStart = 13 * 60 + 20;  // 13:20
+    const afternoonEnd = 15 * 60 + 10;    // 15:10
+
+    // Night session: 20:50 - 2:40 (next day)
+    const nightStart = 20 * 60 + 50;  // 20:50
+    const nightEnd = 2 * 60 + 40;     // 2:40
+
+    // Check morning session (8:40 - 11:40)
+    if (totalMinutes >= morningStart && totalMinutes < morningEnd) {
+        return true;
+    }
+
+    // Check afternoon session (13:20 - 15:10)
+    if (totalMinutes >= afternoonStart && totalMinutes < afternoonEnd) {
+        return true;
+    }
+
+    // Check night session (20:50 - 2:40)
+    // Night session spans midnight, so we need to check two ranges:
+    // 20:50 - 23:59 OR 0:00 - 2:40
+    if (totalMinutes >= nightStart || totalMinutes < nightEnd) {
+        return true;
+    }
+
+    return false;
+};
+
+// If it is trading time now, connect immediately
+if (isTradingTime()) {
+    console.log("Trading time detected at startup, connecting immediately...");
+    connect();
+}
 
 setInterval(() => {
     try {

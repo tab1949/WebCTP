@@ -10,7 +10,9 @@ let trading_day: string = '';
 
 // Setup logger
 try { 
-    fs.mkdirSync('/var/lib/webctp/logs', { recursive: true }); 
+    if (!fs.existsSync('/var/lib/webctp/logs')) {
+        fs.mkdirSync('/var/lib/webctp/logs', { recursive: true });
+    }
 } catch (e) {};
 
 log4js.configure({
@@ -50,7 +52,13 @@ const safeFunc = <T extends any[]>(fn: (...args: T) => any) => {
 };
 
 const ensureDir = (dir: string) => {
-    try { fs.mkdirSync(dir, { recursive: true }); } catch (e) { logger.error('EnsureDir error:', dir, e); }
+    try { 
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+    } catch (e) { 
+        logger.error('EnsureDir error:', dir, e); 
+    }
 };
 
 

@@ -5,16 +5,20 @@
   "type": "module",
   "main": "dist/test.local.js",
   "scripts": {
-    "record-dev": "tsx watch src/record.ts",
-    "record": "tsx src/record.ts"
+    "record-dev": "tsx watch examples/record.ts",
+    "record": "tsx examples/record.ts"
   },
   "author": "tabxx",
   "license": "MIT",
   "dependencies": {
     "@types/node": "^24.9.2",
     "@types/ws": "^8.18.1",
+    "log4js": "^6.9.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/log4js": "^2.3.5"
   }
 }

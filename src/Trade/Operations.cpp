@@ -5,12 +5,9 @@
 namespace tabxx {
 
 void TraderHandler::connect(const string& addr, const string& port) {
-    char a[64];
-    clear(a);
-    string str = string("tcp://" + addr + ":" + port);
-    copy(a, str);
+    string str = "tcp://" + addr + ":" + port;
     info("Client attempting to connect to Trade front: "_s + str);
-    api_->RegisterFront(a);
+    api_->RegisterFront(str.data());
     api_->Init();
     performed(0, 0);
 }

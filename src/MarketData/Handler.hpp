@@ -32,12 +32,10 @@ public:
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void connect(const std::string& addr) {
-        char front[64];
-        clear(front);
-        copy(front, addr);
-        info("Client attempting to connect to Market Data front: "_s + addr);
-        api_->RegisterFront(front);
+    void connect(const std::string& addr, const std::string& port) {
+        string front = "tcp://" + addr + ":" + port;
+        info("Client attempting to connect to Market Data front: "_s + front);
+        api_->RegisterFront(front.data());
         api_->Init();
         performed(0, 0);
     }
@@ -115,9 +113,14 @@ private:
         std::memset(mem, 0, sizeof(T));
     }
     
-    template <typename T>
-    inline void copy(T* mem, const string& str) noexcept {
-        std::memcpy(mem, str.c_str(), str.size());
+    void clear(char*) = delete;
+    
+    template <size_t N>
+    inline void copy(char (&mem)[N], const string& str) noexcept {
+        if (N == 0) return;
+        const size_t to_copy = std::min(str.size(), N - 1);
+        std::memcpy(mem, str.c_str(), to_copy);
+        mem[to_copy] = '\0';
     }
 
     inline void info(const string& s) {

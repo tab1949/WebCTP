@@ -279,6 +279,18 @@ export class Trade {
                 throw new Error("WebSocket is not available");
                 return;
             }
+            if (typeof data.msg === "string") {
+                switch (data.msg) {
+                case "ready":
+                    this.onInit(data);
+                    return;
+                case "parse_error":
+                case "processing_error":
+                case "error":
+                    this.onError(data);
+                    return;
+                }
+            }
             switch (data.msg) {
             case Message.TradeMsgCode.PERFORMED:
                 this.onPerformed(data);
@@ -698,10 +710,6 @@ export class Trade {
                 }
                 break;
             default:
-                if (data.status && data.status == "ready") {
-                    this.onInit(data);
-                    break;
-                }
                 throw new Error("Unknown message: " + JSON.stringify(data));
             }
         };

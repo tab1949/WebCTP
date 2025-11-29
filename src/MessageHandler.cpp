@@ -20,8 +20,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
             return "Error: Field \"port\" not found.";
         if (!j["port"].is_string())
             return "Error: Field \"port\" type error (expected string).";
-        std::string addr = "tcp://" + string(j["addr"]) + ":" + string(j["port"]);
-        md.connect(addr);
+        md.connect(string(j["addr"]), string(j["port"]));
         return "";
     }},
     {"login", [](cjr j, mdr md) {
@@ -76,10 +75,14 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
 
 string HandleMarketDataMessage(cjr j, mdr md) {
     if (!j.contains("op"))
-        return "Error: Field \"op\" not found.";
+        return "Error: Field `op` not found.";
     string operation = j["op"];
     if (map_md.find(operation) == map_md.end())
-        return "Error: Unknown op \"" + operation + "\".";
+        return "Error: Unknown op `" + operation + "`.";
+    if (!j.contains("data"))
+        return "Error: Field `data` not found.";
+    if (!j["data"].is_object())
+        return "Error: Field `data` type error (expected object).";
     return map_md.at(operation)(j["data"], md);
 }
 
@@ -187,24 +190,32 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
                 return "Error: Field \"price\" type error (expected number).";
             if (!j.contains("direction"))
                 return "Error: Field \"direction\" not found.";
-            if (!j["direction"].is_number())
-                return "Error: Field \"direction\" type error (expected number).";
+            if (!j["direction"].is_number_integer())
+                return "Error: Field \"direction\" type error (expected integer).";
+            if (static_cast<int>(j["direction"]) < 0 || static_cast<int>(j["direction"]) > 1)
+                return "Error: Field \"direction\" out of range (0..1).";
             if (!j.contains("offset"))
                 return "Error: Field \"offset\" not found.";
-            if (!j["offset"].is_number())
-                return "Error: Field \"offset\" type error (expected number).";
+            if (!j["offset"].is_number_integer())
+                return "Error: Field \"offset\" type error (expected integer).";
+            if (static_cast<int>(j["offset"]) < 0 || static_cast<int>(j["offset"]) > 6)
+                return "Error: Field \"offset\" out of range (0..6).";
             if (!j.contains("volume"))
                 return "Error: Field \"volume\" not found.";
             if (!j["volume"].is_number())
                 return "Error: Field \"volume\" type error (expected number).";
             if (!j.contains("price_type"))
                 return "Error: Field \"price_type\" not found.";
-            if (!j["price_type"].is_number())
-                return "Error: Field \"price_type\" type error (expected number).";
+            if (!j["price_type"].is_number_integer())
+                return "Error: Field \"price_type\" type error (expected integer).";
+            if (static_cast<int>(j["price_type"]) < 0 || static_cast<int>(j["price_type"]) > 2)
+                return "Error: Field \"price_type\" out of range (0..2).";
             if (!j.contains("time_condition"))
                 return "Error: Field \"time_condition\" not found.";
-            if (!j["time_condition"].is_number())
-                return "Error: Field \"time_condition\" type error (expected number).";
+            if (!j["time_condition"].is_number_integer())
+                return "Error: Field \"time_condition\" type error (expected integer).";
+            if (static_cast<int>(j["time_condition"]) < 0 || static_cast<int>(j["time_condition"]) > 1)
+                return "Error: Field \"time_condition\" out of range (0..1).";
             if (j.contains("memo")) {
                 if (!j["memo"].is_string())
                     return "Error: Field \"memo\" type error (expected string).";
@@ -243,13 +254,21 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
     }},
     {"delete_order", [](cjr j, thr t) {
         if (!j.contains("exchange"))
-            return "Error: Field \"exchange\" not found.";
+            return "Error: Field `exchange` not found.";
         if (!j["exchange"].is_string())
-            return "Error: Field \"exchange\" type error (expected string).";
+            return "Error: Field `exchange` type error (expected string).";
         if (!j.contains("instrument"))
-            return "Error: Field \"instrument\" not found.";
+            return "Error: Field `instrument` not found.";
         if (!j["instrument"].is_string())
-            return "Error: Field \"instrument\" type error (expected string).";
+            return "Error: Field `instrument` type error (expected string).";
+        if (!j.contains("delete_ref"))
+            return "Error: Field `delete_ref` not found.";
+        if (!j["delete_ref"].is_number_integer())
+            return "Error: Field `delete_ref` type error (expected integer).";
+        if (!j.contains("order_sys_id"))
+            return "Error: Field `order_sys_id` not found.";
+        if (!j["order_sys_id"].is_string())
+            return "Error: Field `order_sys_id` type error (expected string).";
         t.deleteOrder(j["exchange"], j["instrument"], j["delete_ref"], j["order_sys_id"]);
         return "";
     }},
@@ -289,14 +308,16 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
 
 string HandleTraderMessage(const json& msg, TraderHandler& trader) {
     if (!msg.contains("op"))
-        return "Error: Field \"op\" not found.";
+        return "Error: Field `op` not found.";
     string operation = msg["op"];
     if (!msg.contains("data"))
-        return "Error: Field \"data\" not found.";
+        return "Error: Field `data` not found.";
+    if (!msg["data"].is_object())
+        return "Error: Field `data` type error (expected object).";
     if (map_trader.find(operation) != map_trader.end())
         return map_trader.at(operation)(msg["data"], trader);
     else
-        return "Error: Unknown operation \"" + operation + "\".";
+        return "Error: Unknown operation `" + operation + "`.";
     return "";
 }
 

@@ -113,6 +113,9 @@ public:
     void OnRspQryInstrument(
         CThostFtdcInstrumentField *pInstrument, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
+
+public:
+    inline void onClosed() noexcept { ws_ = nullptr; }
         
 private:
     template <typename T>
@@ -120,9 +123,14 @@ private:
         std::memset(mem, 0, sizeof(T));
     }
     
-    template <typename T>
-    inline void copy(T* mem, const string& str) noexcept {
-        std::memcpy(mem, str.c_str(), str.size());
+    void clear(char*) = delete;
+
+    template <size_t N>
+    inline void copy(char (&mem)[N], const string& str) noexcept {
+        if (N == 0) return;
+        const size_t to_copy = std::min(str.size(), N - 1);
+        std::memcpy(mem, str.c_str(), to_copy);
+        mem[to_copy] = '\0';
     }
 
     inline void info(const string& s) {
@@ -151,7 +159,9 @@ private:
         if (ws_) {
             try {
                 loop_->defer([d=std::move(data), ws=ws_] () {
-                    ws->send(d.dump());
+                    if (ws) {
+                        ws->send(d.dump());
+                    }
                 });
             } catch (const std::exception& e) {
                 logger_->error("tabxx::TraderHandler::send(): Exception caught. what(): "_s + e.what());

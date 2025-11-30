@@ -44,7 +44,8 @@ export class Trade {
             this.investorID = investorID;
         }
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.set(): WebSocket is not connected");
+            return;
         }
         const data: any = {};
         if (brokerID !== undefined) {
@@ -61,7 +62,8 @@ export class Trade {
 
     public getTradingDay() {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.getTradingDay(): WebSocket is not connected");
+            return;
         }
         this.ws.send(JSON.stringify({
             op: "get_trading_day",
@@ -71,7 +73,7 @@ export class Trade {
 
     public auth(userID: string, appID: string, authCode: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.auth(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -86,7 +88,8 @@ export class Trade {
 
     public login(userID: string, password: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.login(): WebSocket is not connected");
+            return;
         }
         this.ws.send(JSON.stringify({
             op: "login",
@@ -99,7 +102,7 @@ export class Trade {
 
     public logout(userID: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.logout(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -112,7 +115,7 @@ export class Trade {
 
     public querySettlementInfo(tradingDay: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.querySettlementInfo(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -125,7 +128,8 @@ export class Trade {
 
     public confirmSettlementInfo() {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.confirmSettlementInfo(): WebSocket is not connected");
+            return;
         }
         this.ws.send(JSON.stringify({
             op: "confirm_settlement_info",
@@ -135,7 +139,7 @@ export class Trade {
 
     public queryTradingAccount() {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.queryTradingAccount(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -156,7 +160,8 @@ export class Trade {
         timeCondition: number
     ) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.insertOrder(): WebSocket is not connected");
+            return;
         }
         this.ws.send(JSON.stringify({
             op: "insert_order",
@@ -181,7 +186,8 @@ export class Trade {
         to?: string
     }) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.queryOrder(): WebSocket is not connected");
+            return;
         }
         const data: any = {};
         if (options) {
@@ -206,7 +212,8 @@ export class Trade {
 
     public deleteOrder(exchange: string, instrument: string, delRef: number, orderSysID: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.deleteOrder(): WebSocket is not connected");
+            return;
         }
         this.ws.send(JSON.stringify({
             op: "delete_order",
@@ -221,7 +228,8 @@ export class Trade {
 
     public queryInstrument(exchange?: string, instrument?: string, exchangeInstID?: string, productID?: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.Trade.queryInstrument(): WebSocket is not connected");
+            return;
         }
         const data: any = {};
         if (exchange !== undefined) {
@@ -262,7 +270,7 @@ export class Trade {
             this.ws = undefined;
         };
         this.ws.onerror = (event) => {
-            console.error("Error: " + JSON.stringify(event));
+            this.onError("WebCTP.Trade: WebSocket Error: " + JSON.stringify(event));
         };
         this.ws.onopen = () => {
             
@@ -272,11 +280,11 @@ export class Trade {
             try {
                 data = JSON.parse(event.data.toString());
             } catch (error) {
-                throw new Error("Parse message failed: " + error);
+                this.onError("Parse message failed: " + error);
                 return;
             }
             if (!this.ws) {
-                throw new Error("WebSocket is not available");
+                this.onError("WebSocket is not available");
                 return;
             }
             if (typeof data.msg === "string") {
@@ -710,7 +718,7 @@ export class Trade {
                 }
                 break;
             default:
-                throw new Error("Unknown message: " + JSON.stringify(data));
+                this.onError("Unknown message: " + JSON.stringify(data));
             }
         };
     }

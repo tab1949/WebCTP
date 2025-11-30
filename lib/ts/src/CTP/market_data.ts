@@ -44,7 +44,7 @@ export class MarketData {
             this.ws = undefined;
         };
         this.ws.onerror = (event) => {
-            console.error("Error: " + JSON.stringify(event));
+            this.onError("WebCTP.MarketData: WebSocket Error: " + JSON.stringify(event));
         };
         this.ws.onopen = () => {
             
@@ -54,10 +54,12 @@ export class MarketData {
             try {
                 data = JSON.parse(event.data.toString());
             } catch (error) {
-                throw new Error("Parse message failed: " + error);
+                this.onError("Parse message failed: " + error);
+                return;
             }
             if (!this.ws) {
-                throw new Error("WebSocket is not available");
+                this.onError("onmessage(): WebSocket is not available");
+                return;
             }
             if (typeof data.msg === "string") {
                 switch (data.msg) {
@@ -160,14 +162,15 @@ export class MarketData {
                 }
                 break;
             default:
-                throw new Error("Unknown message: " + JSON.stringify(data));
+                this.onError("Unknown message: " + JSON.stringify(data));
+                return;
             }
         };
     }
 
     public login(password: string) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.MarketData.login(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -182,7 +185,7 @@ export class MarketData {
 
     public subscribe(instruments: string[]) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.MarketData.subscribe(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -195,7 +198,7 @@ export class MarketData {
 
     public unsubscribe(instruments: string[]) {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.MarketData.unsubscribe(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
@@ -208,7 +211,7 @@ export class MarketData {
 
     public getTradingDay() {
         if (!this.ws) {
-            throw new Error("WebSocket is not connected");
+            this.onError("WebCTP.MarketData.getTradingDay(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({

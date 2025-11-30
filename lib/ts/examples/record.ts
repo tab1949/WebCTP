@@ -4,6 +4,14 @@ import config from "./test.config.local.json";
 import { spawn, spawnSync } from "child_process";
 import log4js from "log4js";
 
+process.on('uncaughtException', (err) => {
+    logger.error('Uncaught Exception:', err);
+    process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled Rejection:', reason);
+});
+
 const md = new CTP.MarketData(config.client.broker_id, config.client.user_id);
 const trade = new CTP.Trade(config.client.broker_id, config.client.user_id);
 let trading_day: string = '';
@@ -37,17 +45,9 @@ log4js.configure({
 });
 const logger = log4js.getLogger('record');
 
-// Global safety nets: log and keep process alive
-process.on('uncaughtException', (err) => {
-    logger.error('Uncaught Exception:', err);
-});
-process.on('unhandledRejection', (reason) => {
-    logger.error('Unhandled Rejection:', reason);
-});
-
 const safeFunc = <T extends any[]>(fn: (...args: T) => any) => {
     return (...args: T) => {
-        try { return fn(...args); } catch (e) { console.error('Handler error:', e); }
+        try { return fn(...args); } catch (e) { logger.error('Handler error:', e); }
     };
 };
 
@@ -61,6 +61,14 @@ const ensureDir = (dir: string) => {
     }
 };
 
+md.onError = safeFunc((data) => {
+    logger.error("MarketData API Error:", data);
+});
+
+md.onPerformed = safeFunc((d) => {
+    logger.info("MarketData API Performed:", d);
+
+});
 
 md.onInit = safeFunc((d) => {
     logger.info("Connected to WebCTP server (MarketData), info:", d);
@@ -80,7 +88,7 @@ md.onLogin = safeFunc((d) => {
     logger.info("MarketData Login.");
 });
 
-md.onMarketData = async (d) => {
+md.onMarketData = safeFunc((d) => {
     const filename = `/var/lib/webctp/record/${d.TradingDay}/${d.InstrumentID}.csv`;
     try {
         if (!fs.existsSync(filename))
@@ -90,7 +98,11 @@ md.onMarketData = async (d) => {
     catch(e) {
         logger.error(`Write file ${filename} failed, exception:`, e);
     }
-}
+});
+
+trade.onPerformed = safeFunc((d) => {
+    logger.info("Trade API Performed:", d);
+});
 
 trade.onInit = safeFunc((d) => {
     logger.info("Connected to WebCTP server (Trading), info:", d);
@@ -205,13 +217,6 @@ trade.onQueryInstrument = safeFunc((data) => {
 });
 
 const stop = () => {
-    if (instruments.length > 0) {
-        try { 
-            md.unsubscribe(instruments); 
-        } catch (e) { logger.error('md.unsubscribe error:', e); }
-        instruments.length = 0;
-    }
-
     try { 
         trade.logout(config.client.user_id); 
     } catch (e) { logger.error('trade.logout error:', e); }
@@ -222,6 +227,13 @@ const stop = () => {
     try { 
         md.disconnect(); 
     } catch (e) { logger.error('md.disconnect error:', e); }
+
+    log4js.shutdown((err) => {
+        if (err) {
+            console.error("Failed to shutdown log4js:", err);
+        }
+        process.exit(0);
+    });
 };
 
 const connect = () => {
@@ -234,10 +246,32 @@ const connect = () => {
     } catch (e) { logger.error('md.connect error:', e); }
 };
 
+process.on('SIGINT', stop);
+process.on('SIGTERM', stop);
+process.on('exit', () => log4js.shutdown());
+
+interface Time {
+    hour: number;
+    minute: number;
+};
+
+const getUTC8 = (): Time => {
+    try {
+        const now = new Date();
+        return {
+            hour: (now.getUTCHours() + 8) % 24,
+            minute: now.getUTCMinutes()
+        };
+    }
+    catch (e) {
+        throw `Exception caught in getUTC8(): ${e}`;
+    }
+}
+
 const validateTime = (): boolean => {
-    const now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes();
+    const now = getUTC8();
+    const h = now.hour;
+    const m = now.minute;
     const minutes = h * 60 + m;
     const toMinutes = (hh: number, mm: number) => hh * 60 + mm;
     if (minutes >= toMinutes(8, 40) && minutes < toMinutes(11, 40)) return true;
@@ -259,14 +293,18 @@ try {
 
 setInterval(() => {
     try {
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = now.getMinutes();
+        const now = getUTC8();
+        const hours = now.hour;
+        const minutes = now.minute;
 
         if (hours === 8 && minutes === 40) { logger.info("Attempt to connect..."); connect(); return; }
         if (hours === 11 && minutes === 40) { logger.info("Attempt to pause..."); stop(); return; }
         if (hours === 13 && minutes === 20) { logger.info("Attempt to connect..."); connect(); return; }
         if (hours === 15 && minutes === 10) { logger.info("Attempt to pause..."); stop();
+            if (!trading_day) {
+                logger.warn("trading_day is not set, skip archiving.");
+                return;
+            }
             try {
                 const tarRes = spawnSync('tar', ['-cf', `/var/lib/webctp/record/archived/${trading_day}.tar`, `/var/lib/webctp/record/${trading_day}`]);
                 if (tarRes.error) logger.error('tar error:', tarRes.error);
@@ -289,6 +327,3 @@ setInterval(() => {
         logger.error('setInterval error:', e);
     }
 }, 1000 * 60);
-
-process.on('SIGINT', stop);
-process.on('SIGTERM', stop);

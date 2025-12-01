@@ -3,10 +3,12 @@ import * as Message from "./message";
 
 export class MarketData {
     public onInit: (data: any) => void = () => {};
+    public onConnected: (data: any) => void = () => {};
+    public onDisconnected: (data: any) => void = () => {}
     public onPerformed: (data: any) => void = () => {};
     public onError: (data: any) => void = () => {};
-    public onConnected: (data: any) => void = () => {};
-    public onDisconnected: (data: any) => void = () => {};
+    public onFrontConnected: (data: any) => void = () => {};
+    public onFrontDisconnected: (data: any) => void = () => {};
     public onHeartbeatTimeout: (data: any) => void = () => {};
     public onLogin: (data: any) => void = () => {};
     public onLogout: (data: any) => void = () => {};
@@ -42,12 +44,13 @@ export class MarketData {
         this.ws = new ws.WebSocket(`ws://${addr}:${port}/market_data`);
         this.ws.onclose = () => {
             this.ws = undefined;
+            this.onDisconnected("WebCTP.MarketData: WebSocket closed");
         };
         this.ws.onerror = (event) => {
             this.onError("WebCTP.MarketData: WebSocket Error: " + JSON.stringify(event));
         };
         this.ws.onopen = () => {
-            
+            this.onConnected("WebCTP.MarketData: WebSocket opened");
         };
         this.ws.onmessage = (event) => {
             let data: any;
@@ -81,10 +84,10 @@ export class MarketData {
                 this.onError(data);
                 break;
             case Message.MDMsgCode.CONNECTED:
-                this.onConnected(data);
+                this.onFrontConnected(data);
                 break;
             case Message.MDMsgCode.DISCONNECTED:
-                this.onDisconnected(data);
+                this.onFrontDisconnected(data);
                 break;
             case Message.MDMsgCode.HEARTBEAT_TIMEOUT:
                 this.onHeartbeatTimeout(data);

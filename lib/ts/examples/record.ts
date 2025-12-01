@@ -76,6 +76,14 @@ md.onInit = safeFunc((d) => {
 });
 
 md.onConnected = safeFunc((d) => {
+    logger.info("MarketData WebSocket connected:", d);
+});
+
+md.onDisconnected = safeFunc((d) => {
+    logger.warn("MarketData WebSocket disconnected:", d);
+});
+
+md.onFrontConnected = safeFunc((d) => {
     logger.info("Connected to front.");
     try { 
         md.login(config.client.password); 
@@ -113,7 +121,15 @@ trade.onError = safeFunc((data) => {
     logger.error("Trade API Error:", data);
 });
 
-trade.onConnected = safeFunc((data) => {
+trade.onConnected = safeFunc((d) => {
+    logger.info("Trade WebSocket connected:", d);
+});
+
+trade.onDisconnected = safeFunc((d) => {
+    logger.warn("Trade WebSocket disconnected:", d);
+});
+
+trade.onFrontConnected = safeFunc((data) => {
     logger.info("Connected to CTP.");
     try {
         trade.set(config.client.broker_id, config.client.user_id);
@@ -127,7 +143,7 @@ trade.onTradingDay = safeFunc((data) => {
     logger.info("Trading day: " + data.info.trading_day);
 });
 
-trade.onDisconnected = safeFunc((data) => {
+trade.onFrontDisconnected = safeFunc((data) => {
     logger.warn("Disconnected. Message:", data);
 });
 
@@ -232,7 +248,6 @@ const stop = () => {
         if (err) {
             console.error("Failed to shutdown log4js:", err);
         }
-        process.exit(0);
     });
 };
 

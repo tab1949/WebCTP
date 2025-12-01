@@ -243,12 +243,6 @@ const stop = () => {
     try { 
         md.disconnect(); 
     } catch (e) { logger.error('md.disconnect error:', e); }
-
-    log4js.shutdown((err) => {
-        if (err) {
-            console.error("Failed to shutdown log4js:", err);
-        }
-    });
 };
 
 const connect = () => {

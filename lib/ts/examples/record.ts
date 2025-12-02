@@ -226,6 +226,7 @@ trade.onQueryInstrument = safeFunc((data) => {
                     logger.error('md.subscribe error:', v, e); 
                 }
             });
+            instruments.length = 0;
         }
     } catch (e) { 
         logger.error('onQueryInstrument error:', e); 

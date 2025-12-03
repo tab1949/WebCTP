@@ -1,0 +1,7 @@
+[Unit]
+Description=Stop futures market data recorder
+Wants=record-start.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl stop record-start.service

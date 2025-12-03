@@ -1,7 +1,6 @@
-import * as CTP from "../src/CTP";
+import * as CTP from "../../src/CTP";
 import * as fs from "fs";
 import config from "./test.config.local.json";
-import { spawn, spawnSync } from "child_process";
 import log4js from "log4js";
 
 process.on('uncaughtException', (err) => {
@@ -163,8 +162,8 @@ trade.onLogin = safeFunc((data) => {
         logger.info("Trading day: " + trading_day);
         try {
             ensureDir('/var/lib/webctp');
+            ensureDir('/var/lib/webctp/archived');
             ensureDir('/var/lib/webctp/record');
-            ensureDir('/var/lib/webctp/record/archived');
             ensureDir(`/var/lib/webctp/record/${trading_day}`);
         } catch (e) { 
             logger.error('mkdir error:', e); 
@@ -244,6 +243,13 @@ const stop = () => {
     try { 
         md.disconnect(); 
     } catch (e) { logger.error('md.disconnect error:', e); }
+    
+    log4js.shutdown(() => {
+        logger.info('Logger shutdown failed.');
+        process.exit(1);
+    });
+
+    process.exit(0);
 };
 
 const connect = () => {
@@ -260,80 +266,4 @@ process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
 process.on('exit', () => log4js.shutdown());
 
-interface Time {
-    hour: number;
-    minute: number;
-};
-
-const getUTC8 = (): Time => {
-    try {
-        const now = new Date();
-        return {
-            hour: (now.getUTCHours() + 8) % 24,
-            minute: now.getUTCMinutes()
-        };
-    }
-    catch (e) {
-        throw `Exception caught in getUTC8(): ${e}`;
-    }
-}
-
-const validateTime = (): boolean => {
-    const now = getUTC8();
-    const h = now.hour;
-    const m = now.minute;
-    const minutes = h * 60 + m;
-    const toMinutes = (hh: number, mm: number) => hh * 60 + mm;
-    if (minutes >= toMinutes(8, 40) && minutes < toMinutes(11, 40)) return true;
-    if (minutes >= toMinutes(13, 20) && minutes < toMinutes(15, 10)) return true;
-    if (minutes >= toMinutes(20, 50) || minutes < toMinutes(2, 40)) return true;
-    return false;
-};
-
-try {
-    if (validateTime()) {
-        logger.info('Valid time. Connect immediately...');
-        connect();
-    } else {
-        logger.info('Invalid time. Waiting for trigger...');
-    }
-} catch (e) {
-    logger.error('Initial trading time check error:', e);
-}
-
-setInterval(() => {
-    try {
-        const now = getUTC8();
-        const hours = now.hour;
-        const minutes = now.minute;
-
-        if (hours === 8 && minutes === 40) { logger.info("Attempt to connect..."); connect(); return; }
-        if (hours === 11 && minutes === 40) { logger.info("Attempt to pause..."); stop(); return; }
-        if (hours === 13 && minutes === 20) { logger.info("Attempt to connect..."); connect(); return; }
-        if (hours === 15 && minutes === 10) { logger.info("Attempt to pause..."); stop();
-            if (!trading_day) {
-                logger.warn("trading_day is not set, skip archiving.");
-                return;
-            }
-            try {
-                const tarRes = spawnSync('tar', ['-cf', `/var/lib/webctp/record/archived/${trading_day}.tar`, `/var/lib/webctp/record/${trading_day}`]);
-                if (tarRes.error) logger.error('tar error:', tarRes.error);
-            } catch (e) { logger.error('tar spawnSync error:', e); }
-            try {
-                const rmProc = spawn('rm', ['-r', `/var/lib/webctp/record/${trading_day}`]);
-                rmProc.on('error', (e) => logger.error('rm error:', e));
-                rmProc.on('close', (code, signal) => logger.info('rm close:', code, signal));
-            } catch (e) { logger.error('rm spawn error:', e); }
-            try {
-                const gzProc = spawn('gzip', ['-9', `/var/lib/webctp/record/archived/${trading_day}.tar`]);
-                gzProc.on('error', (e) => logger.error('gzip error:', e));
-                gzProc.on('close', (code, signal) => logger.info('gzip close:', code, signal));
-            } catch (e) { logger.error('gzip spawn error:', e); }
-            return;
-        }
-        if (hours === 20 && minutes === 50) { logger.info("Attempt to connect..."); connect(); return; }
-        if (hours === 2 && minutes === 40) { logger.info("Attempt to pause..."); stop(); return; }
-    } catch (e) {
-        logger.error('setInterval error:', e);
-    }
-}, 1000 * 60);
+connect();

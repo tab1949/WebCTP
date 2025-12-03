@@ -5,8 +5,7 @@
   "type": "module",
   "main": "dist/test.local.js",
   "scripts": {
-    "record-dev": "tsx watch examples/record.ts",
-    "record": "tsx examples/record.ts"
+    "record": "tsx examples/recorder/record.ts"
   },
   "author": "tabxx",
   "license": "MIT",

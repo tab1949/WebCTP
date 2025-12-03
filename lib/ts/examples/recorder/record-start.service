@@ -1,0 +1,12 @@
+[Unit]
+Description=Run futures market data recorder
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/local/lib/webctp/recorder
+ExecStart=npm run record
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

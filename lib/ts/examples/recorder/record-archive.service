@@ -1,0 +1,6 @@
+[Unit]
+Description=Archive collected futures market data
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'pushd /var/lib/webctp/record > /dev/null && tar -zcf ../archived/$(ls).tar.gz $(ls) && rm -r $(ls) && popd > /dev/null'

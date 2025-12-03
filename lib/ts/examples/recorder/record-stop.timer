@@ -1,0 +1,12 @@
+[Unit]
+Description=Timer to stop futures market data recorder
+
+[Timer]
+OnCalendar=*-*-* 11:40:00
+OnCalendar=*-*-* 15:10:00
+OnCalendar=*-*-* 02:40:00
+Unit=record-stop.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

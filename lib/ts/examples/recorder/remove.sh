@@ -4,9 +4,11 @@ set -euo pipefail
 INSTALL_ROOT="/usr/local/lib/webctp/recorder"
 SYSTEMD_UNIT_DIR="/etc/systemd/system"
 DISTRIBUTED_UNITS=(
-  record.timer
+  record-start.timer
   record-start.service
+  record-stop.timer
   record-stop.service
+  record-archive.timer
   record-archive.service
 )
 

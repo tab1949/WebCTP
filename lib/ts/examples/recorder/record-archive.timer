@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer to archive futures market data recordings
+
+[Timer]
+OnCalendar=*-*-* 15:30:00
+Unit=record-archive.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

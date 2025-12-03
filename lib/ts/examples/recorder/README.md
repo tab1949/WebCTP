@@ -8,7 +8,7 @@ To install the program files, run the following commands in this directory:
 
 And then, enable the timer:
 
-`sudo systemctl enable --now record.timer`
+`sudo systemctl enable --now record.timer record-stop.timer record-archive.timer`
 
 After doing these, the program will run automatically when trading time is coming, and will be stopped after trading time is ended. 
 

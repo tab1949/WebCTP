@@ -41,10 +41,12 @@ mkdir -p "$SYSTEMD_UNIT_DIR"
 install -m 0644 "./record-start.service" "$SYSTEMD_UNIT_DIR/record-start.service"
 install -m 0644 "./record-stop.service" "$SYSTEMD_UNIT_DIR/record-stop.service"
 install -m 0644 "./record-archive.service" "$SYSTEMD_UNIT_DIR/record-archive.service"
-install -m 0644 "./record.timer" "$SYSTEMD_UNIT_DIR/record.timer"
+install -m 0644 "./record-start.timer" "$SYSTEMD_UNIT_DIR/record-start.timer"
+install -m 0644 "./record-stop.timer" "$SYSTEMD_UNIT_DIR/record-stop.timer"
+install -m 0644 "./record-archive.timer" "$SYSTEMD_UNIT_DIR/record-archive.timer"
 
 echo "Reloading systemd daemon..."
 systemctl daemon-reload
 
-echo "Recorder installed to $INSTALL_ROOT. Enable and start the timer when ready with:"
-echo "  systemctl enable --now record.timer"
+echo "Recorder installed to $INSTALL_ROOT. Enable and start the timers when ready with:"
+echo "  systemctl enable --now record-start.timer record-stop.timer record-archive.timer"

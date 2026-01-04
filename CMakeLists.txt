@@ -35,3 +35,9 @@ target_link_libraries(webctp
     pthread
     dl
 )
+
+add_executable(logger_test
+    test/log.cpp
+)
+target_include_directories(logger_test PRIVATE src)
+target_link_libraries(logger_test pthread)

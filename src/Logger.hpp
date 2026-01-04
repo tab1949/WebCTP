@@ -10,6 +10,9 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <queue>
+#include <thread>
+#include <atomic>
 
 namespace tabxx {
 
@@ -18,11 +21,23 @@ inline std::string operator ""_s(const char* s, std::size_t len) {
 }
 
 class Logger {
+protected:
+    struct Message {
+        std::chrono::system_clock::time_point time;
+        int level;
+        std::string scope;
+        std::string text;
+    };
+
 public:
-    Logger(const std::string& default_scope = "default") : default_scope_(default_scope) {
+    Logger(const std::string& default_scope = "default") : 
+        default_scope_(default_scope),
+        wait_time_(100), 
+        worker_stop_(false), 
+        worker_thread_(&Logger::worker, this) {
     }
 
-    Logger(const std::string& filename, const std::string& default_scope) : default_scope_(default_scope) {
+    Logger(const std::string& filename, const std::string& default_scope) : Logger(default_scope) {
         try {
             std::filesystem::path file_path(filename);
             std::filesystem::path dir_path = file_path.parent_path();
@@ -50,36 +65,56 @@ public:
     }
 
     ~Logger() {
+        worker_stop_.store(true);
+        if (worker_thread_.joinable()) 
+            worker_thread_.join();
         if (file_)
             file_->close();
     }
 
     Logger& info(const std::string& s, const std::string& scope = "") {
-        return this->write(s, 0, scope);
+        return this->enqueue(Message{std::chrono::system_clock::now() + std::chrono::hours(8), 0, scope, s});
     }
 
     Logger& warn(const std::string& s, const std::string& scope = "") {
-        return this->write(s, 1, scope);
+        return this->enqueue(Message{std::chrono::system_clock::now() + std::chrono::hours(8), 1, scope, s});
     }
 
     Logger& error(const std::string& s, const std::string& scope = "") {
-        return this->write(s, 2, scope);
+        return this->enqueue(Message{std::chrono::system_clock::now() + std::chrono::hours(8), 2, scope, s});
     }
 
+    Logger& setDefaultScope(const std::string& scope) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        default_scope_ = scope;
+        return *this;
+    }
+
+    Logger& setWaitTime(std::chrono::milliseconds timeout) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        wait_time_ = timeout;
+        return *this;
+    }
+    
 protected:
-    Logger& write(const std::string& str, int level, const std::string& scope) noexcept {
+    Logger& enqueue(Message&& msg) noexcept {
+        std::lock_guard<std::mutex> lock(mutex_);
+        log_queue_.push(std::move(msg));
+        return *this;
+    }
+
+    void write(const Message& msg) noexcept {
         try {
-            auto time_utc8 = std::chrono::system_clock::now() + std::chrono::hours(8); // UTC+8
-            auto time_t = std::chrono::system_clock::to_time_t(time_utc8);
+            auto time_t = std::chrono::system_clock::to_time_t(msg.time);
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                time_utc8.time_since_epoch()) % 1000;
+                msg.time.time_since_epoch()) % 1000;
             
             std::tm* tm = std::gmtime(&time_t);
 
             const char* lv;
             const char* color_start = "";
             constexpr const char* color_reset = "\033[0m";
-            switch (level) {
+            switch (msg.level) {
             case 0:
                 lv = "INFO ";
                 color_start = "\033[32m";
@@ -102,8 +137,8 @@ protected:
                          tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
                          tm->tm_hour, tm->tm_min, tm->tm_sec, ms.count());
             
-            const std::string& use_scope = scope.empty() ? default_scope_ : scope;
-            size_t est_size = std::strlen(time_buf) + use_scope.size() + str.size() + 32;
+            const std::string& use_scope = msg.scope.empty() ? default_scope_ : msg.scope;
+            size_t est_size = std::strlen(time_buf) + use_scope.size() + msg.text.size() + 32;
    
             std::string console_msg;
             console_msg.reserve(est_size + 16);
@@ -117,7 +152,7 @@ protected:
             console_msg += use_scope;
             console_msg += color_reset;
             console_msg += "] ";
-            console_msg += str;
+            console_msg += msg.text;
             console_msg += '\n';
             
             std::string file_msg;
@@ -129,11 +164,10 @@ protected:
                 file_msg += "] [";
                 file_msg += use_scope;
                 file_msg += "] ";
-                file_msg += str;
+                file_msg += msg.text;
                 file_msg += '\n'; 
             }
 
-            std::lock_guard<std::mutex> lock(mutex_);
             std::cout.write(console_msg.c_str(), console_msg.size());
             std::cout.flush();
             
@@ -144,25 +178,41 @@ protected:
         }
         catch (const std::exception& e) {
             try {
-                std::lock_guard<std::mutex> lock(mutex_);
                 std::cerr << "[Logger Error] Exception in write(): " << e.what() << std::endl;
             } catch (...) {
             }
         }
         catch(...) {
             try {
-                std::lock_guard<std::mutex> lock(mutex_);
                 std::cerr << "[Logger Error] Unknown exception in write()" << std::endl;
             } catch (...) {
             }
         }
-        return *this;
+    }
+
+    void worker() {
+        while (!worker_stop_.load()) {
+            std::unique_lock<std::mutex> lock(mutex_);
+            if (log_queue_.empty()) {
+                lock.unlock();
+                std::this_thread::sleep_for(this->wait_time_);
+                continue;
+            }
+            Message msg(log_queue_.front());
+            log_queue_.pop();
+            lock.unlock();
+            this->write(msg);
+        }
     }
 
 private:
     std::shared_ptr<std::fstream> file_;
     std::mutex mutex_;
     std::string default_scope_;
+    std::queue<Message> log_queue_;
+    std::thread worker_thread_;
+    std::atomic<bool> worker_stop_;
+    std::chrono::milliseconds wait_time_;
 
 }; // class Logger
 

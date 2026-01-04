@@ -10,22 +10,25 @@
 using namespace tabxx;
 using std::string;
 
-struct execConfig {
+struct Config {
+    bool start = true;
     string addr = "localhost";
     string port = "8888";
     string flow = "./flow";
     string log = "";
 };
 
-int parseArgs(int argc, char** args, execConfig& config);
+int parseArgs(int argc, char** args, Config& config);
 
 int main(int argc, char** args) {
-    execConfig config;
+    Config config;
     int ret = parseArgs(argc, args, config);
     if (ret != 0) {
         return ret; 
     }
-    
+    else if (!config.start) {
+        return 0;
+    }
 
     try {
         WebSocketApp app(config.addr, config.port, config.flow, config.log);
@@ -48,17 +51,19 @@ const char * hint =
 "  -l, --log        Specify the path log files (default: no file logging)";
 
 
-int parseArgs(int argc, char** args, execConfig& config) {
+int parseArgs(int argc, char** args, Config& config) {
     for (int i = 1; i < argc; i++) {
         string arg = args[i];
         
         if (arg == "-h" || arg == "--help") {
             std::cout << hint << std::endl;
+            config.start = false;
             return 0;
         }
         else if (arg == "-v" || arg == "--version") {
             std::cout << "WebCTP version: 0.0.1" << std::endl;
             std::cout << "CTP API version: " << CThostFtdcMdApi::GetApiVersion() << std::endl;
+            config.start = false;
             return 0;
         }
         else if (arg == "-a" || arg == "--addr") {

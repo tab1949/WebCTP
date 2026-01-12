@@ -149,7 +149,7 @@ private:
         if (ws_) {
             try {
                 loop_->defer([d=std::move(data), ws=ws_] () {
-                    ws->send(d.dump());
+                    ws->send(d.dump(), uWS::OpCode::TEXT);
                 });
             } catch (const std::exception& e) {
                 logger_->error("tabxx::TraderHandler::send(): Exception caught. what(): "_s + e.what());

@@ -160,7 +160,7 @@ private:
             try {
                 loop_->defer([d=std::move(data), ws=ws_] () {
                     if (ws) {
-                        ws->send(d.dump());
+                        ws->send(d.dump(), uWS::OpCode::TEXT);
                     }
                 });
             } catch (const std::exception& e) {

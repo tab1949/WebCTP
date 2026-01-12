@@ -159,6 +159,7 @@ void WebSocketApp::init() {
             return;
         }
         logger_.info("Server started.");
+        flag_runnable_ = true;
     });
 }
 

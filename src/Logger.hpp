@@ -191,17 +191,34 @@ protected:
     }
 
     void worker() {
-        while (!worker_stop_.load()) {
+        bool run = true;
+        while (run) {
             std::unique_lock<std::mutex> lock(mutex_);
             if (log_queue_.empty()) {
                 lock.unlock();
+                if (worker_stop_.load())
+                    break;
                 std::this_thread::sleep_for(this->wait_time_);
                 continue;
             }
             Message msg(log_queue_.front());
             log_queue_.pop();
-            lock.unlock();
-            this->write(msg);
+            if (!worker_stop_.load())
+                run = false;
+            if (run) {
+                lock.unlock();
+                this->write(msg);
+            }
+            else { // flush remaining logs, keep lock held
+                this->write(msg);
+                while (!log_queue_.empty()) {
+                    Message m(log_queue_.front());
+                    log_queue_.pop();
+                    this->write(m);
+                }
+                lock.unlock();
+                break;
+            }
         }
     }
 

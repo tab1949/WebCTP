@@ -25,6 +25,9 @@ public:
     }
 
     void run() {
+        if (!flag_runnable_) {
+            return;
+        }
         logger_.info("Server will listen: " + addr_ + ":" + port_);
         app_.run();
     }
@@ -41,6 +44,7 @@ private:
     void init();
 
 private:
+    bool flag_runnable_ = false;
     Logger logger_;
     uWS::App app_;
     string flow_;

@@ -203,7 +203,7 @@ protected:
             }
             Message msg(log_queue_.front());
             log_queue_.pop();
-            if (!worker_stop_.load())
+            if (worker_stop_.load())
                 run = false;
             if (run) {
                 lock.unlock();

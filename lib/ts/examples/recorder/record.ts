@@ -100,7 +100,7 @@ md.onMarketData = safeFunc((d) => {
     try {
         if (!fs.existsSync(filename))
             fs.writeFileSync(filename, "TradingDay,InstrumentID,UpdateTime,UpdateMillisec,LastPrice,Volume,BidPrice1,BidVolume1,AskPrice1,AskVolume1,AveragePrice,Turnover,OpenInterest,UpperLimitPrice,LowerLimitPrice\n");
-        fs.appendFile(filename, `${d.TradingDay},${d.InstrumentID},${d.UpdateTime},${d.UpdateMillisec},${d.LastPrice.toFixed(2)},${d.Volume},${d.BidPrice1.toFixed(2)},${d.BidVolume1},${d.AskPrice1.toFixed(2)},${d.AskVolume1},${d.AveragePrice.toFixed(2)},${d.Turnover},${d.OpenInterest},${d.UpperLimitPrice},${d.LowerLimitPrice}\n`, ()=>{});
+        fs.appendFile(filename, `${d.TradingDay},${d.InstrumentID},${d.UpdateTime},${d.UpdateMillisec},${d.LastPrice.toFixed(3)},${d.Volume},${d.BidPrice1.toFixed(3)},${d.BidVolume1},${d.AskPrice1.toFixed(3)},${d.AskVolume1},${d.AveragePrice.toFixed(3)},${d.Turnover},${d.OpenInterest},${d.UpperLimitPrice},${d.LowerLimitPrice}\n`, ()=>{});
     }
     catch(e) {
         logger.error(`Write file ${filename} failed, exception:`, e);

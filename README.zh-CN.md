@@ -19,17 +19,17 @@ WebCTP 封装了官方的 CTP API（ThostFtdcMdApi 和 ThostFtdcTraderApi），�
 ## 架构
 
 ```
-┌─────────────┐         WebSocket          ┌──────────────┐
-│  TypeScript │ ◄─────────────────────────► │  C++ 服务器  │
-│   客户端    │                             │   (WebCTP)   │
-└─────────────┘                             └──────┬───────┘
-                                                   │
-                                                   │ CTP API
-                                                   ▼
-                                          ┌──────────────┐
-                                          │  经纪公司 CTP  │
-                                          │   服务器     │
-                                          └──────────────┘
+┌─────────────┐     WebSocket    ┌──────────────┐
+│  WebSocket  │ ◄──────────────► │  C++ 服务器  │
+│   客户端    │                  │   (WebCTP)   │
+└─────────────┘                  └──────┬───────┘
+                                        │
+                                        │ CTP API
+                                        ▼
+                              ┌─────────────┐
+                              │  经纪商     │
+                              │  CTP服务器  │
+                              └─────────────┘
 ```
 
 ## 组件
@@ -74,13 +74,13 @@ make
 使用默认设置启动服务器（localhost:8888）：
 
 ```bash
-./WebCTP
+./webctp
 ```
 
 或指定自定义地址和端口：
 
 ```bash
-./WebCTP <地址> <端口>
+./webctp [-a <地址>] [-p <端口>]
 ```
 
 ## 使用
@@ -96,22 +96,6 @@ make
 - [TypeScript 库使用方法](doc/typescript_library_cn.md)
 
 完整的文档索引请参见[文档目录](doc/README_CN.md)。
-
-## 项目结构
-
-```
-WebCTP/
-├── src/                    # C++ 服务器源代码
-│   ├── main.cpp           # 服务器入口点
-│   ├── MessageHandler.cpp # WebSocket 消息处理
-│   ├── MarketData/        # 行情数据处理器
-│   └── Trade/             # 交易处理器
-├── lib/
-│   └── ts/                # TypeScript 客户端库
-│       └── src/
-│           └── CTP/       # CTP 客户端类
-└── CMakeLists.txt         # 构建配置
-```
 
 ## 许可证
 

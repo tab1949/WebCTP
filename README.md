@@ -19,17 +19,17 @@ WebCTP wraps the official CTP API (ThostFtdcMdApi and ThostFtdcTraderApi) and ex
 ## Architecture
 
 ```
-┌─────────────┐         WebSocket          ┌──────────────┐
-│  TypeScript │ ◄─────────────────────────► │  C++ Server  │
-│   Client    │                             │   (WebCTP)   │
-└─────────────┘                             └──────┬───────┘
-                                                   │
-                                                   │ CTP API
-                                                   ▼
-                                          ┌──────────────┐
-                                          │  CTP Broker  │
-                                          │   Servers    │
-                                          └──────────────┘
+┌─────────────┐    WebSocket    ┌──────────────┐
+│  WebSocket  │ ◄─────────────► │  C++ Server  │
+│   Client    │                 │   (WebCTP)   │
+└─────────────┘                 └──────┬───────┘
+                                       │
+                                       │ CTP API
+                                       ▼
+                              ┌──────────────┐
+                              │  CTP Broker  │
+                              │   Servers    │
+                              └──────────────┘
 ```
 
 ## Components
@@ -74,13 +74,13 @@ make
 Start the server with default settings (localhost:8888):
 
 ```bash
-./WebCTP
+./webctp
 ```
 
 Or specify custom address and port:
 
 ```bash
-./WebCTP <address> <port>
+./webctp [-a <address>] [-p <port>]
 ```
 
 ## Usage
@@ -97,21 +97,6 @@ For detailed documentation and usage examples, please refer to:
 
 See also the [documentation index](doc/README_EN.md) for a complete overview.
 
-## Project Structure
-
-```
-WebCTP/
-├── src/                    # C++ server source code
-│   ├── main.cpp           # Server entry point
-│   ├── MessageHandler.cpp # WebSocket message handling
-│   ├── MarketData/        # Market data handler
-│   └── Trade/             # Trading handler
-├── lib/
-│   └── ts/                # TypeScript client library
-│       └── src/
-│           └── CTP/       # CTP client classes
-└── CMakeLists.txt         # Build configuration
-```
 
 ## License
 

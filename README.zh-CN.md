@@ -54,20 +54,27 @@ TypeScript 客户端库提供：
 
 - CMake 3.10 或更高版本
 - 支持 C++17 的编译器
-- 已安装 CTP API 库：
-  - `thostmduserapi_se` (行情数据 API)
-  - `thosttraderapi_se` (交易 API)
+- 已安装 CTP SDK：
+  - `thostmduserapi_se` (行情)
+  - `thosttraderapi_se` (交易)
 - uWebSockets 库
 - ICU 库
 
 ### 构建步骤
-
-```bash
-mkdir build
-cd build
-cmake ..
-make
+#### 1. 确保 CTP SDK 已安装
+建议的安装方式是将库文件 (`*.a` 或 `*.lib`) 和头 (`*.h`) 放入目录`build/ctp/`.
+#### 2. 构建二进制文件
+在 Windows 上:
+```powershell
+./build
 ```
+
+在 Linux 上:
+```bash
+./build.sh
+```
+
+然后等待脚本下载依赖项并构建可执行文件. 第一次构建可能需要几分钟.
 
 ## 运行
 

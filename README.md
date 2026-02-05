@@ -54,21 +54,27 @@ The TypeScript client library provides:
 
 - CMake 3.10 or higher
 - C++17 compatible compiler
-- CTP API libraries installed:
-  - `thostmduserapi_se` (Market Data API)
-  - `thosttraderapi_se` (Trading API)
+- CTP SDK installed:
+  - `thostmduserapi_se` (Market Data)
+  - `thosttraderapi_se` (Trading)
 - uWebSockets library
 - ICU library
 
 ### Build Steps
-
-```bash
-mkdir build
-cd build
-cmake ..
-make
+#### 1. Make sure CTP SDK is installed
+The recommended installation method is put libraries (`*.a` or `*.lib`) and includes (`*.h`) into directory `build/ctp/`.
+#### 2. Build binary 
+On Windows:
+```powershell
+./build
 ```
 
+On Linux:
+```bash
+./build.sh
+```
+
+Then wait for the script to download dependencies and build the executable. It may take some minutes to build the project for the first time.
 ## Running
 
 Start the server with default settings (localhost:8888):

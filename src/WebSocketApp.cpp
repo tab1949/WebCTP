@@ -46,7 +46,7 @@ void WebSocketApp::init() {
                 try {
                     ws->send(mkmsg("parse_error",
                         json {
-                            {"msg", "Invalid JSON payload"}
+                            {"msg", "Invalid JSON payload, e.what(): "_s + e.what()}
                         },
                         json{}
                     ));
@@ -69,7 +69,7 @@ void WebSocketApp::init() {
                 try {
                     ws->send(mkmsg("processing_error",
                         json {
-                            {"msg", "Processing error"}
+                            {"msg", "Processing error, e.what(): "_s + e.what()}
                         },
                         json{}
                     ));
@@ -110,7 +110,7 @@ void WebSocketApp::init() {
                 try {
                     ws->send(mkmsg("parse_error",
                         json {
-                            {"msg", "Invalid JSON payload"}
+                            {"msg", "Invalid JSON payload, e.what(): "_s + e.what()}
                         },
                         json{}
                     ));
@@ -133,7 +133,7 @@ void WebSocketApp::init() {
                 try {
                     ws->send(mkmsg("processing_error",
                         json {
-                            {"msg", "Processing error"}
+                            {"msg", "Processing error, e.what(): "_s + e.what()}
                         },
                         json{}
                     ));

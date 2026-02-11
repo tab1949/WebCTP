@@ -3,7 +3,7 @@
 namespace tabxx {
 
 void TraderHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(TradeMsgCode::ERROR, pRspInfo, {
+    send(TradeMsgCode::ERROR_MSG, pRspInfo, {
         {"req_id", nRequestID},
         {"is_last", bIsLast}
     });
@@ -212,6 +212,37 @@ void TraderHandler::OnRspQryTradingAccount(
     );
 }
 
+std::string MakeOrderBrief(
+    TThostFtdcOrderRefType ref, 
+    TThostFtdcInstrumentIDType instrument_id, 
+    TThostFtdcExchangeIDType exchange_id,
+    TThostFtdcVolumeType volume,
+    TThostFtdcPriceType price,
+    Direction direction, 
+    OrderOffset of, 
+    OrderPriceType opt, 
+    Hedge hedge, 
+    TimeCondition tc) {
+    std::string ret = "REF ";
+    ret += ref;
+    ret += ',';
+    ret += hedge == Hedge::SPECULATION ? "SPEC " : "HEDGE ";
+    ret += direction == Direction::BUY ? "BUY " : "SELL ";
+    ret += of == OrderOffset::OPEN ? "OPEN " : "CLOSE ";
+    ret += std::to_string(volume);
+    ret += ' ';
+    ret += instrument_id;
+    ret += '@';
+    ret += exchange_id;
+    ret += ',';
+    ret += opt == OrderPriceType::LIMITED ? "LIMITED" : "MARKET";
+    ret += '@';
+    ret += std::to_string(price);
+    ret += " ";
+    ret += tc == TimeCondition::IMMEDIATE ? "IMMEDIATELY" : "ONE_DAY";
+    return ret;
+}
+
 void TraderHandler::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
     Direction direction;
     OrderOffset of;
@@ -229,15 +260,21 @@ void TraderHandler::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CTh
         catch (const std::exception& e) {
             logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): Exception caught");
             send(TradeMsgCode::ERROR_UNKNOWN_VALUE, pRspInfo, {
-                {"info", e.what()},
+                {"info", "tabxx::TraderHandler::OnRspOrderInsert(): Exception caught, e.what(): "_s + e.what()},
                 {"req_id", nRequestID},
                 {"is_last", bIsLast}
             });
             logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): what(): "_s + e.what());
+            return;
         }
     }
     else {
         logger_->error("tabxx::TraderHandler::OnRspOrderInsert(): pInputOrder is nullptr");
+        send(TradeMsgCode::ERROR_NULL, {
+            {"code", TradeMsgCode::ERROR_NULL},
+            {"msg", "tabxx::TraderHandler::OnRspOrderInsert(): pInputOrder is nullptr"},
+        }, {});
+        return;
     }
     send(TradeMsgCode::ORDER_INSERT_ERROR, pRspInfo,
         pInputOrder? json {
@@ -291,13 +328,19 @@ void TraderHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, 
         catch (const std::exception& e) {
             logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): Exception caught");
             send(TradeMsgCode::ERROR_UNKNOWN_VALUE, pRspInfo, {
-                {"info", e.what()},
+                {"info", "tabxx::TraderHandler::OnErrRtnOrderInsert(): Exception caught, e.what(): "_s + e.what()},
             });
             logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): what(): "_s + e.what());
+            return;
         }
     }
     else {
-        logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): pInputOrder is nullptr");
+        logger_->error("tabxx::TraderHandler::OnErrRtnOrderInsert(): `pInputOrder` is nullptr");
+        send(TradeMsgCode::ERROR_NULL, {
+            {"code", TradeMsgCode::ERROR_NULL},
+            {"msg", "tabxx::TraderHandler::OnErrRtnOrderInsert(): `pInputOrder` is nullptr"},
+        }, {});
+        return;
     }
     send(TradeMsgCode::ORDER_INSERT_RETURN_ERROR, pRspInfo,
         pInputOrder? json {
@@ -337,32 +380,15 @@ void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
     OrderPriceType opt;
     Hedge hedge;
     TimeCondition tc;
-    string report = "ACCEPTED: ";
-    report += pOrder->InstrumentID;
-    report += " in ";
-    report += pOrder->ExchangeID;
-    report += " with ref '";
-    report += pOrder->OrderRef;
-    report += "' ";
-    report += direction == Direction::BUY ? "BUY" : "SELL";
-    report += " ";
-    report += of == OrderOffset::OPEN ? "OPEN" : "CLOSE";
-    report += " ";
-    report += std::to_string(pOrder->VolumeTotal);
-    report += opt == OrderPriceType::LIMITED ? "LIMITED" : "MARKET";
-    report += " at ";
-    report += std::to_string(pOrder->LimitPrice);
-    report += " ";
-    report += tc == TimeCondition::IMMEDIATE ? "IMMEDIATELY" : "ONE_DAY";
     if (pOrder) {
         try {
             submitStatus = GetOrderSubmitStatus(pOrder->OrderSubmitStatus);
-            status = GetOrderStatus(pOrder->OrderStatus);
-            direction = GetDirection(pOrder->Direction);
-            of = GetOrderOperation(pOrder->CombOffsetFlag[0]);
-            opt = GetOrderPriceType(pOrder->OrderPriceType);
-            hedge = GetHedge(pOrder->CombHedgeFlag[0]);
-            tc = GetTimeCondition(pOrder->TimeCondition);
+            status       = GetOrderStatus(pOrder->OrderStatus);
+            direction    = GetDirection(pOrder->Direction);
+            of           = GetOrderOperation(pOrder->CombOffsetFlag[0]);
+            opt          = GetOrderPriceType(pOrder->OrderPriceType);
+            hedge        = GetHedge(pOrder->CombHedgeFlag[0]);
+            tc           = GetTimeCondition(pOrder->TimeCondition);
         }
         catch (const std::exception& e) {
             logger_->error("tabxx::TraderHandler::OnRtnOrder(): Exception caught.");
@@ -370,11 +396,29 @@ void TraderHandler::OnRtnOrder(CThostFtdcOrderField *pOrder) {
                 {"info", e.what()}
             });
             logger_->error("tabxx::TraderHandler::OnRtnOrder(): what(): "_s + e.what());
+            return;
         }
     }
     else {
         logger_->error("tabxx::TraderHandler::OnRtnOrder(): Parameter 'pOrder' is nullptr!");
+        send(TradeMsgCode::ERROR_NULL, {
+            {"code", TradeMsgCode::ERROR_NULL},
+            {"msg", "tabxx::TraderHandler::OnRtnOrder(): Parameter 'pOrder' is nullptr!"}
+        }, {});
+        return;
     }
+    string report = "ACCEPTED: " + MakeOrderBrief(
+        pOrder->OrderRef,
+        pOrder->InstrumentID,
+        pOrder->ExchangeID,
+        pOrder->VolumeTotal,
+        pOrder->LimitPrice,
+        direction,
+        of,
+        opt,
+        hedge,
+        tc
+    );
     send(status == OrderStatus::CANCELED ? TradeMsgCode::ORDER_DELETED: TradeMsgCode::ORDER_INSERTED,
         {
             {"code", 0},
@@ -424,13 +468,19 @@ void TraderHandler::OnRtnTrade(CThostFtdcTradeField *pTrade) {
         catch (const std::exception& e) {
             logger_->error("tabxx::TraderHandler::OnRtnTrade(): Exception caught.");
             send(TradeMsgCode::ERROR_UNKNOWN_VALUE, {}, {
-                {"info", e.what()}
+                {"info", "tabxx::TraderHandler::OnRtnTrade(): Exception caught, e.what(): "_s + e.what()}
             });
             logger_->error("tabxx::TraderHandler::OnRtnTrade(): what(): "_s + e.what());
+            return;
         }
     }
     else {
         logger_->error("tabxx::TraderHandler::OnRtnTrade(): Parameter 'pTrade' is nullptr!");
+        send(TradeMsgCode::ERROR_NULL, {
+            {"code", TradeMsgCode::ERROR_NULL},
+            {"msg", "tabxx::TraderHandler::OnRtnTrade(): Parameter 'pTrade' is nullptr!"}
+        }, {});
+        return;
     }
     send(TradeMsgCode::ORDER_TRADED,
         {
@@ -480,9 +530,10 @@ void TraderHandler::OnRspQryOrder(
         catch (const std::exception& e) {
             logger_->error((std::string)"tabxx::TraderHandler::OnRspQryOrder(): Exception caught.");
             send(TradeMsgCode::ERROR_UNKNOWN_VALUE, {}, {
-                {"info", e.what()}
+                {"info", "tabxx::TraderHandler::OnRspQryOrder(): Exception caught, e.what(): "_s + e.what()}
             });
             logger_->error((std::string)"tabxx::TraderHandler::OnRspQryOrder(): what(): " + e.what());
+            return;
         }
     }
     send(TradeMsgCode::QUERY_ORDER, pRspInfo,

@@ -4,7 +4,7 @@ namespace tabxx {
 
 
 void MarketDataHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
-    send(MDMsgCode::ERROR, pRspInfo,
+    send(MDMsgCode::ERROR_MSG, pRspInfo,
         {
             {"req_id", nRequestID},
             {"is_last", bIsLast}

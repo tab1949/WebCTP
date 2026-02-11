@@ -5,7 +5,7 @@ namespace tabxx {
 
 enum class MDMsgCode {
     PERFORMED = 0,
-    ERROR = 1,
+    ERROR_MSG = 1,
     CONNECTED = 2,
     DISCONNECTED = 3,
     HEARTBEAT_TIMEOUT = 4,
@@ -14,7 +14,8 @@ enum class MDMsgCode {
     TRADING_DAY = 7,
     SUBSCRIBE = 8,
     UNSUBSCRIBE = 9,
-    MARKET_DATA = 10
+    MARKET_DATA = 10,
+    ERROR_SIZE = 11,
 };
 
 } // namespace tabxx

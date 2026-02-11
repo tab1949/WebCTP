@@ -5,7 +5,7 @@
 
 #include <uWebSockets/App.h>
 #include <uWebSockets/HttpResponse.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 namespace tabxx {
 

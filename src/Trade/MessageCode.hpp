@@ -5,7 +5,7 @@ namespace tabxx {
 
 enum class TradeMsgCode {
     PERFORMED = 0,
-    ERROR,
+    ERROR_MSG,
     ERROR_NULL,
     ERROR_UNKNOWN_VALUE,
     CONNECTED,

@@ -1,6 +1,10 @@
 #ifndef LOG_HPP_
 #define LOG_HPP_
 
+#ifdef _WIN32
+#pragma warning(disable: 4996)
+#endif
+
 #include <ctime>
 #include <cstring>
 #include <chrono>
@@ -133,7 +137,7 @@ protected:
             }
             
             char time_buf[64];
-            std::snprintf(time_buf, sizeof(time_buf), "[UTC+8 %04d-%02d-%02d %02d:%02d:%02d.%03ld]", 
+            std::snprintf(time_buf, sizeof(time_buf), "[UTC+8 %04d-%02d-%02d %02d:%02d:%02d.%03lld]", 
                          tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
                          tm->tm_hour, tm->tm_min, tm->tm_sec, ms.count());
             
@@ -239,5 +243,9 @@ private:
 #ifdef TABXX_USE_STRINGIFY
 using tabxx::operator""_s;
 #endif // TABXX_USE_STRINGIFY
+
+#ifdef _WIN32
+#pragma warning(default: 4996)
+#endif
 
 #endif // LOG_HPP_

@@ -8,7 +8,7 @@
 
 #include <uWebSockets/App.h>
 #include <ThostFtdcMdApi.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "MessageCode.hpp"
 #include "../Types.hpp"
@@ -78,12 +78,36 @@ public:
         );
     }
     
+#ifndef WEBCTP_SUBSCRIBE_LIMIT
+#define WEBCTP_SUBSCRIBE_LIMIT INT_MAX
+#endif
+
     void subscribe(const std::vector<std::string>& instruments) {
+        if (instruments.empty()) {
+            send(MDMsgCode::ERROR_SIZE, 
+                json {
+                    {"code", MDMsgCode::ERROR_SIZE},
+                    {"msg", "No instruments provided for subscription"}
+                },
+                json()
+            );
+            return;
+        }
+        if (instruments.size() > WEBCTP_SUBSCRIBE_LIMIT) {
+            send(MDMsgCode::ERROR_SIZE, 
+                json {
+                    {"code", MDMsgCode::ERROR_SIZE},
+                    {"msg", "Too many instruments provided for subscription"}
+                },
+                json()
+            );
+            return;
+        }
         std::vector<const char*> mem;
         for (auto i : instruments) {
             mem.emplace_back(i.c_str());
         }
-        auto ret = api_->SubscribeMarketData((char**)mem.data(), mem.size());
+        auto ret = api_->SubscribeMarketData((char**)mem.data(), static_cast<int>(mem.size()));
         auto req = req_id_++;
         info("Client subscribed to Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
         performed(req, ret);
@@ -94,11 +118,31 @@ public:
     void OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) override;
     
     void unsubscribe(const std::vector<std::string>& instruments) {
+        if (instruments.empty()) {
+            send(MDMsgCode::ERROR_SIZE, 
+                json {
+                    {"code", MDMsgCode::ERROR_SIZE},
+                    {"msg", "No instruments provided for unsubscription"}
+                },
+                json()
+            );
+            return;
+        }
+        if (instruments.size() > WEBCTP_SUBSCRIBE_LIMIT) {
+            send(MDMsgCode::ERROR_SIZE, 
+                json {
+                    {"code", MDMsgCode::ERROR_SIZE},
+                    {"msg", "Too many instruments provided for unsubscription"}
+                },
+                json()
+            );
+            return;
+        }
         std::vector<const char*> mem;
         for (auto i : instruments) {
             mem.emplace_back(i.c_str());
         }
-        auto ret = api_->UnSubscribeMarketData((char**)mem.data(), mem.size());
+        auto ret = api_->UnSubscribeMarketData((char**)mem.data(), static_cast<int>(mem.size()));
         auto req = req_id_++;
         info("Client unsubscribed from Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
         performed(req, ret);

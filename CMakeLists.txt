@@ -48,6 +48,37 @@ target_link_libraries(webctp
     ${CTP_TRADER_LIB}
 )
 
+get_filename_component(CTP_LIB_DIR "${CTP_MD_LIB}" DIRECTORY)
+if(WIN32)
+    set(CTP_MD_LIB_NAME "thostmduserapi_se.dll")
+    set(CTP_TRADER_LIB_NAME "thosttraderapi_se.dll")
+else()
+    set(CTP_MD_LIB_NAME "libthostmduserapi_se.so")
+    set(CTP_TRADER_LIB_NAME "libthosttraderapi_se.so")
+endif()
+set(CTP_MD_DLL "${CTP_LIB_DIR}/${CTP_MD_LIB_NAME}")
+set(CTP_TRADER_DLL "${CTP_LIB_DIR}/${CTP_TRADER_LIB_NAME}")
+
+if(EXISTS "${CTP_MD_DLL}")
+    add_custom_command(TARGET webctp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CTP_MD_DLL}"
+            "$<TARGET_FILE_DIR:webctp>/${CTP_MD_LIB_NAME}"
+    )
+else()
+    message(WARNING "CTP MD library not found, expected: ${CTP_MD_DLL}")
+endif()
+    
+if(EXISTS "${CTP_TRADER_DLL}")
+    add_custom_command(TARGET webctp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CTP_TRADER_DLL}"
+            "$<TARGET_FILE_DIR:webctp>/${CTP_TRADER_LIB_NAME}"
+    )
+else()
+    message(WARNING "CTP Trader library not found, expected: ${CTP_TRADER_DLL}")
+endif()
+
 # add_executable(logger_test
 #     test/log.cpp
 # )

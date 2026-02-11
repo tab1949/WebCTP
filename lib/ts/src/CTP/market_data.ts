@@ -16,6 +16,7 @@ export class MarketData {
     public onSubscribe: (data: any) => void = () => {};
     public onUnsubscribe: (data: any) => void = () => {};
     public onMarketData: (data: Message.MarketData) => void = () => {};
+    public onErrorSize: (data: any) => void = () => {};
 
     private ws: ws.WebSocket | undefined;
     private tradingDay: string | undefined;
@@ -163,6 +164,9 @@ export class MarketData {
                     };
                     this.onMarketData(d);
                 }
+                break;
+            case Message.MDMsgCode.ERROR_SIZE:
+                this.onErrorSize(data);
                 break;
             default:
                 this.onError("Unknown message: " + JSON.stringify(data));

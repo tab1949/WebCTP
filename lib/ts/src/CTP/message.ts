@@ -11,7 +11,8 @@ export enum MDMsgCode {
     TRADING_DAY = 7,
     SUBSCRIBE = 8,
     UNSUBSCRIBE = 9,
-    MARKET_DATA = 10
+    MARKET_DATA = 10,
+    ERROR_SIZE = 11
 }
 
 export const MDMsgInfo: Record<MDMsgCode, string> = {
@@ -25,7 +26,8 @@ export const MDMsgInfo: Record<MDMsgCode, string> = {
     [MDMsgCode.TRADING_DAY]: "Trading Day",
     [MDMsgCode.SUBSCRIBE]: "Subscribe",
     [MDMsgCode.UNSUBSCRIBE]: "Unsubscribe",
-    [MDMsgCode.MARKET_DATA]: "Market Data"
+    [MDMsgCode.MARKET_DATA]: "Market Data",
+    [MDMsgCode.ERROR_SIZE]: "Error Size"
 }
 
 export enum TradeMsgCode {

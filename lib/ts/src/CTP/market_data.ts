@@ -28,16 +28,6 @@ export class MarketData {
         this.userID = userID;
     }
 
-    public connectFront(addr: string, port: string) {
-        this.ws?.send(JSON.stringify({
-            op: "connect",
-            data: {
-                addr: addr,
-                port: port
-            }
-        }));
-    }
-
     public connect(addr: string, port: string) {
         if (this.ws) {
             return;
@@ -47,13 +37,13 @@ export class MarketData {
             this.ws = undefined;
             this.onDisconnected("WebCTP.MarketData: WebSocket closed");
         };
-        this.ws.onerror = (event) => {
+        this.ws.onerror = (event: any) => {
             this.onError("WebCTP.MarketData: WebSocket Error: " + JSON.stringify(event));
         };
         this.ws.onopen = () => {
             this.onConnected("WebCTP.MarketData: WebSocket opened");
         };
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = (event: any) => {
             let data: any;
             try {
                 data = JSON.parse(event.data.toString());
@@ -175,7 +165,18 @@ export class MarketData {
         };
     }
 
-    public login(password: string) {
+    public connectFront(op_ref: string, addr: string, port: string) {
+        this.ws?.send(JSON.stringify({
+            op: "connect",
+            data: {
+                op_ref: op_ref,
+                addr: addr,
+                port: port
+            }
+        }));
+    }
+
+    public login(op_ref: string, password: string) {
         if (!this.ws) {
             this.onError("WebCTP.MarketData.login(): WebSocket is not connected");
             return;
@@ -183,6 +184,7 @@ export class MarketData {
         this.ws.send(JSON.stringify({
             op: "login",
             data: {
+                op_ref: op_ref,
                 broker_id: this.brokerID,
                 user_id: this.userID,
                 password: password
@@ -190,7 +192,7 @@ export class MarketData {
         }));
     }
 
-    public subscribe(instruments: string[]) {
+    public subscribe(op_ref: string, instruments: string[]) {
         if (!this.ws) {
             this.onError("WebCTP.MarketData.subscribe(): WebSocket is not connected");
             return;
@@ -198,12 +200,13 @@ export class MarketData {
         this.ws.send(JSON.stringify({
             op: "subscribe",
             data: {
+                op_ref: op_ref,
                 instruments: instruments
             }
         }));
     }
 
-    public unsubscribe(instruments: string[]) {
+    public unsubscribe(op_ref: string, instruments: string[]) {
         if (!this.ws) {
             this.onError("WebCTP.MarketData.unsubscribe(): WebSocket is not connected");
             return;
@@ -211,19 +214,22 @@ export class MarketData {
         this.ws.send(JSON.stringify({
             op: "unsubscribe",
             data: {
+                op_ref: op_ref,
                 instruments: instruments
             }
         }));
     }
 
-    public getTradingDay() {
+    public getTradingDay(op_ref: string) {
         if (!this.ws) {
             this.onError("WebCTP.MarketData.getTradingDay(): WebSocket is not connected");
             return;
         }
         this.ws.send(JSON.stringify({
             op: "get_trading_day",
-            data: {}
+            data: {
+                op_ref: op_ref
+            }
         }));
     }
 

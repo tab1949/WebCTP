@@ -21,7 +21,18 @@ inline Direction GetDirection(TThostFtdcDirectionType d) {
     case THOST_FTDC_D_Sell:
         return Direction::SELL;
     default:
-        throw std::runtime_error(std::string("tabxx::GetDirection(): Unknown order direction: ") + d);
+        throw std::runtime_error(std::string("tabxx::GetDirection(TThostFtdcDirectionType): Unknown order direction: ") + d);
+    }
+}
+
+inline TThostFtdcDirectionType GetDirection(Direction d) {
+    switch (d) {
+    case Direction::BUY:
+        return THOST_FTDC_D_Buy;
+    case Direction::SELL:
+        return THOST_FTDC_D_Sell;
+    default:
+        throw std::runtime_error(std::string("tabxx::GetDirection(tabxx::Direction): Unknown order direction: ") + static_cast<char>(d));
     }
 }
 
@@ -52,7 +63,28 @@ inline OrderOffset GetOrderOperation(TThostFtdcOffsetFlagType o) {
     case THOST_FTDC_OF_LocalForceClose:
         return OrderOffset::LOCAL_FORCED_CLOSE;
     default: 
-        throw std::runtime_error(std::string("tabxx::GetOrderOperation(): Unknown order operation type: ") + o);
+        throw std::runtime_error(std::string("tabxx::GetOrderOperation(TThostFtdcOffsetFlagType): Unknown order operation type: ") + o);
+    }
+}
+
+inline TThostFtdcOffsetFlagType GetOrderOperation(OrderOffset of) {
+    switch (of) {
+    case OrderOffset::OPEN:
+        return THOST_FTDC_OF_Open;
+    case OrderOffset::CLOSE:
+        return THOST_FTDC_OF_Close;
+    case OrderOffset::CLOSE_TODAY:
+        return THOST_FTDC_OF_CloseToday;
+    case OrderOffset::CLOSE_YESTERDAY:
+        return THOST_FTDC_OF_CloseYesterday;
+    case OrderOffset::FORCED_CLOSE:
+        return THOST_FTDC_OF_ForceClose;
+    case OrderOffset::FORCED_OFF:
+        return THOST_FTDC_OF_ForceOff;
+    case OrderOffset::LOCAL_FORCED_CLOSE:
+        return THOST_FTDC_OF_LocalForceClose;
+    default: 
+        throw std::runtime_error(std::string("tabxx::GetOrderOperation(tabxx::OrderOffset): Unknown order operation type: ") + static_cast<char>(of));
     }
 }
 
@@ -71,7 +103,20 @@ inline OrderPriceType GetOrderPriceType(TThostFtdcOrderPriceTypeType o) {
     case THOST_FTDC_OPT_LastPrice:
         return OrderPriceType::LAST;
     default:
-        throw std::runtime_error(std::string("tabxx::GetOrderPriceType(): Unknown order price type: ") + o);
+        throw std::runtime_error(std::string("tabxx::GetOrderPriceType(TThostFtdcOrderPriceTypeType): Unknown order price type: ") + o);
+    }
+}
+
+inline TThostFtdcOrderPriceTypeType GetOrderPriceType(OrderPriceType opt) {
+    switch (opt) {
+    case OrderPriceType::LIMITED:
+        return THOST_FTDC_OPT_LimitPrice;
+    case OrderPriceType::MARKET:
+        return THOST_FTDC_OPT_AnyPrice;
+    case OrderPriceType::LAST:
+        return THOST_FTDC_OPT_LastPrice;
+    default:
+        throw std::runtime_error(std::string("tabxx::GetOrderPriceType(tabxx::OrderPriceType): Unknown order price type: ") + static_cast<char>(opt));
     }
 }
 
@@ -84,7 +129,16 @@ inline Hedge GetHedge(TThostFtdcHedgeFlagType h) {
     case THOST_FTDC_HF_Speculation:
         return Hedge::SPECULATION;
     default:
-        throw std::runtime_error((std::string)"tabxx::GetHedge(): Unknown hedge type: " + h);
+        throw std::runtime_error((std::string)"tabxx::GetHedge(TThostFtdcHedgeFlagType): Unknown hedge type: " + h);
+    }
+}
+
+inline TThostFtdcHedgeFlagType GetHedge(Hedge hedge) {
+    switch (hedge) {
+    case Hedge::SPECULATION:
+        return THOST_FTDC_HF_Speculation;
+    default:
+        throw std::runtime_error((std::string)"tabxx::GetHedge(tabxx::Hedge): Unknown hedge type: " + static_cast<char>(hedge));
     }
 }
 
@@ -100,7 +154,18 @@ inline TimeCondition GetTimeCondition(TThostFtdcTimeConditionType tc) {
     case THOST_FTDC_TC_GFD:
         return TimeCondition::ONE_DAY;
     default: 
-        throw std::runtime_error((std::string)"tabxx::GetTimeCondition(): Unknown time condition: " + tc);
+        throw std::runtime_error((std::string)"tabxx::GetTimeCondition(TThostFtdcTimeConditionType): Unknown time condition: " + tc);
+    }
+}
+
+inline TThostFtdcTimeConditionType GetTimeCondition(TimeCondition tc) {
+    switch (tc) {
+    case TimeCondition::IMMEDIATE:
+        return THOST_FTDC_TC_IOC;
+    case TimeCondition::ONE_DAY:
+        return THOST_FTDC_TC_GFD;
+    default: 
+        throw std::runtime_error((std::string)"tabxx::GetTimeCondition(tabxx::TimeCondition): Unknown time condition: " + static_cast<char>(tc));
     }
 }
 
@@ -131,7 +196,7 @@ inline OrderSubmitStatus GetOrderSubmitStatus(TThostFtdcOrderSubmitStatusType s)
     case THOST_FTDC_OSS_ModifyRejected:
         return OrderSubmitStatus::MODIFY_REJECTED;
     default: 
-        throw std::runtime_error((std::string)"tabxx::GetOrderSubmitStatus(): Unknown order submitting status: " + s);
+        throw std::runtime_error((std::string)"tabxx::GetOrderSubmitStatus(TThostFtdcOrderSubmitStatusType): Unknown order submitting status: " + s);
     }
 }
 
@@ -168,8 +233,71 @@ inline OrderStatus GetOrderStatus(TThostFtdcOrderStatusType s) {
     case THOST_FTDC_OST_Touched:
         return OrderStatus::TOUCHED;
     default: 
-        throw std::runtime_error((std::string)"tabxx::GetOrderStatus(): Unknown order status: " + s);
+        throw std::runtime_error((std::string)"tabxx::GetOrderStatus(TThostFtdcOrderStatusType): Unknown order status: " + s);
     }
+}
+
+inline std::string MakeOrderBrief(
+    TThostFtdcOrderRefType ref, 
+    TThostFtdcInstrumentIDType instrument_id, 
+    TThostFtdcExchangeIDType exchange_id,
+    TThostFtdcVolumeType volume,
+    TThostFtdcPriceType price,
+    Direction direction, 
+    OrderOffset of, 
+    OrderPriceType opt, 
+    Hedge hedge, 
+    TimeCondition tc) {
+    std::string ret = "REF ";
+    ret += ref;
+    ret += ',';
+    ret += hedge == Hedge::SPECULATION ? "SPEC " : "HEDGE ";
+    ret += direction == Direction::BUY ? "BUY " : "SELL ";
+    switch (of) {
+    case OrderOffset::OPEN:
+        ret += "OPEN ";
+        break;
+    case OrderOffset::CLOSE:
+        ret += "CLOSE ";
+        break;
+    case OrderOffset::CLOSE_TODAY:
+        ret += "CLOSE_TODAY ";
+        break;
+    case OrderOffset::CLOSE_YESTERDAY:
+        ret += "CLOSE_YESTERDAY ";
+        break;
+    case OrderOffset::FORCED_CLOSE:
+        ret += "FORCED_CLOSE ";
+        break;
+    case OrderOffset::FORCED_OFF:
+        ret += "FORCED_OFF ";
+        break;
+    case OrderOffset::LOCAL_FORCED_CLOSE:
+        ret += "LOCAL_FORCED_CLOSE ";
+        break;
+    }
+    ret += std::to_string(volume);
+    ret += ' ';
+    ret += instrument_id;
+    ret += '@';
+    ret += exchange_id;
+    ret += ',';
+    switch (opt) {
+    case OrderPriceType::LIMITED:
+        ret += "LIMITED_PRICE";
+        break;
+    case OrderPriceType::MARKET:
+        ret += "MARKET_PRICE";
+        break;
+    case OrderPriceType::LAST:
+        ret += "LAST_PRICE";
+        break;
+    }
+    ret += '@';
+    ret += std::to_string(price);
+    ret += " ";
+    ret += tc == TimeCondition::IMMEDIATE ? "IMMEDIATELY" : "ONE_DAY";
+    return ret;
 }
 
 } // namespace tabxx

@@ -71,7 +71,7 @@ md.onPerformed = safeFunc((d) => {
 
 md.onInit = safeFunc((d) => {
     logger.info("Connected to WebCTP server (MarketData), info:", d);
-    md.connectFront(config.front.addr_md, config.front.port_md);
+    md.connectFront("", config.front.addr_md, config.front.port_md);
 });
 
 md.onConnected = safeFunc((d) => {
@@ -85,7 +85,7 @@ md.onDisconnected = safeFunc((d) => {
 md.onFrontConnected = safeFunc((d) => {
     logger.info("Connected to front.");
     try { 
-        md.login(config.client.password); 
+        md.login("", config.client.password); 
     } catch (e) {
         logger.error('md.login error:', e); 
     }
@@ -113,7 +113,7 @@ trade.onPerformed = safeFunc((d) => {
 
 trade.onInit = safeFunc((d) => {
     logger.info("Connected to WebCTP server (Trading), info:", d);
-    trade.connectFront(config.front.addr_trade, config.front.port_trade);
+    trade.connectFront("", config.front.addr_trade, config.front.port_trade);
 });
 
 trade.onError = safeFunc((data) => {
@@ -131,8 +131,8 @@ trade.onDisconnected = safeFunc((d) => {
 trade.onFrontConnected = safeFunc((data) => {
     logger.info("Connected to CTP.");
     try {
-        trade.set(config.client.broker_id, config.client.user_id);
-        trade.auth(config.client.user_id, config.client.app_id, config.client.auth_code);
+        trade.set("", config.client.broker_id, config.client.user_id);
+        trade.auth("", config.client.user_id, config.client.app_id, config.client.auth_code);
     } catch (e) { 
         logger.error('Trade.set/auth error:', e); 
     }
@@ -149,7 +149,7 @@ trade.onFrontDisconnected = safeFunc((data) => {
 trade.onAuthenticate = safeFunc((data) => {
     logger.info("Authenticated. Message:", data);
     try { 
-        trade.login(config.client.user_id, config.client.password); 
+        trade.login("", config.client.user_id, config.client.password); 
     } catch (e) { 
         logger.error('trade.login error:', e); 
     }
@@ -175,7 +175,7 @@ trade.onLogin = safeFunc((data) => {
     const day = String(utc8Time.getUTCDate()).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
     try { 
-        trade.querySettlementInfo(dateStr); 
+        trade.querySettlementInfo("", dateStr); 
     } catch (e) { 
         logger.error('querySettlementInfo error:', e); 
     }
@@ -191,7 +191,7 @@ trade.onSettlementInfo = safeFunc((data) => {
         if (data?.IsLast) {
             logger.info(`${settlementCount + 1} lines of settlement info received.`);
             settlementCount = 0;
-            trade.confirmSettlementInfo();
+            trade.confirmSettlementInfo("");
         }
         else {
             settlementCount ++;
@@ -205,7 +205,7 @@ trade.onSettlementInfoConfirm = safeFunc((data) => {
     if (data.IsLast)
         logger.info(`Settlement info confirmed. Confirm date: ${data.ConfirmDate}, time: ${data.ConfirmTime}`);
     try { 
-        trade.queryInstrument(); 
+        trade.queryInstrument(""); 
     } catch (e) { 
         logger.error('queryInstrument error:', e); 
     }
@@ -220,7 +220,7 @@ trade.onQueryInstrument = safeFunc((data) => {
         if (data.IsLast) {
             instruments.forEach((v) => {
                 try { 
-                    md.subscribe([v]); 
+                    md.subscribe("", [v]); 
                 } catch (e) { 
                     logger.error('md.subscribe error:', v, e); 
                 }
@@ -234,7 +234,7 @@ trade.onQueryInstrument = safeFunc((data) => {
 
 const stop = () => {
     try { 
-        trade.logout(config.client.user_id); 
+        trade.logout("", config.client.user_id); 
     } catch (e) { logger.error('trade.logout error:', e); }
 
     try { 

@@ -212,37 +212,6 @@ void TraderHandler::OnRspQryTradingAccount(
     );
 }
 
-std::string MakeOrderBrief(
-    TThostFtdcOrderRefType ref, 
-    TThostFtdcInstrumentIDType instrument_id, 
-    TThostFtdcExchangeIDType exchange_id,
-    TThostFtdcVolumeType volume,
-    TThostFtdcPriceType price,
-    Direction direction, 
-    OrderOffset of, 
-    OrderPriceType opt, 
-    Hedge hedge, 
-    TimeCondition tc) {
-    std::string ret = "REF ";
-    ret += ref;
-    ret += ',';
-    ret += hedge == Hedge::SPECULATION ? "SPEC " : "HEDGE ";
-    ret += direction == Direction::BUY ? "BUY " : "SELL ";
-    ret += of == OrderOffset::OPEN ? "OPEN " : "CLOSE ";
-    ret += std::to_string(volume);
-    ret += ' ';
-    ret += instrument_id;
-    ret += '@';
-    ret += exchange_id;
-    ret += ',';
-    ret += opt == OrderPriceType::LIMITED ? "LIMITED" : "MARKET";
-    ret += '@';
-    ret += std::to_string(price);
-    ret += " ";
-    ret += tc == TimeCondition::IMMEDIATE ? "IMMEDIATELY" : "ONE_DAY";
-    return ret;
-}
-
 void TraderHandler::OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) {
     Direction direction;
     OrderOffset of;

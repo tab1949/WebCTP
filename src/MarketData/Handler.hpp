@@ -32,18 +32,18 @@ public:
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void connect(const std::string& addr, const std::string& port) {
+    void connect(const std::string& op_ref, const std::string& addr, const std::string& port) {
         string front = "tcp://" + addr + ":" + port;
         info("Client attempting to connect to Market Data front: "_s + front);
         api_->RegisterFront(front.data());
         api_->Init();
-        performed(0, 0);
+        performed(op_ref, 0, 0);
     }
     void OnFrontConnected() override;
     void OnFrontDisconnected(int reason) override;
     void OnHeartBeatWarning(int time) override;
 
-    void login(const std::string& broker_id, const std::string& user_id, const std::string& password) {
+    void login(const std::string& op_ref, const std::string& broker_id, const std::string& user_id, const std::string& password) {
         CThostFtdcReqUserLoginField f;
         clear(&f);
         copy(f.BrokerID, broker_id);
@@ -52,7 +52,7 @@ public:
         int req_id = req_id_++;
         auto ret = api_->ReqUserLogin(&f, req_id);
         info("Sent login request. ReqID: "_s + std::to_string(req_id) + "; Return: " + std::to_string(ret));
-        performed(req_id, ret);
+        performed(op_ref, req_id, ret);
     }
     void OnRspUserLogin(
         CThostFtdcRspUserLoginField *pRspUserLogin, 
@@ -64,7 +64,7 @@ public:
         CThostFtdcUserLogoutField *pUserLogout, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void getTradingDay() {
+    void getTradingDay(const std::string& op_ref) {
         auto trading_day = api_->GetTradingDay();
         info("Client query Trading Day. Trading Day: "_s + std::string(trading_day));
         send(MDMsgCode::TRADING_DAY, 
@@ -73,6 +73,7 @@ public:
                 {"msg", ""}
             },
             json {
+                {"op_ref", op_ref},
                 {"trading_day", trading_day}
             }   
         );
@@ -82,7 +83,7 @@ public:
 #define WEBCTP_SUBSCRIBE_LIMIT INT_MAX
 #endif
 
-    void subscribe(const std::vector<std::string>& instruments) {
+    void subscribe(const std::string& op_ref, const std::vector<std::string>& instruments) {
         if (instruments.empty()) {
             send(MDMsgCode::ERROR_SIZE, 
                 json {
@@ -110,14 +111,14 @@ public:
         auto ret = api_->SubscribeMarketData((char**)mem.data(), static_cast<int>(mem.size()));
         auto req = req_id_++;
         info("Client subscribed to Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
-        performed(req, ret);
+        performed(op_ref, req, ret);
     }
     void OnRspSubMarketData(
         CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
     void OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData) override;
     
-    void unsubscribe(const std::vector<std::string>& instruments) {
+    void unsubscribe(const std::string& op_ref, const std::vector<std::string>& instruments) {
         if (instruments.empty()) {
             send(MDMsgCode::ERROR_SIZE, 
                 json {
@@ -145,7 +146,7 @@ public:
         auto ret = api_->UnSubscribeMarketData((char**)mem.data(), static_cast<int>(mem.size()));
         auto req = req_id_++;
         info("Client unsubscribed from Market Data for "_s + std::to_string(instruments.size()) + " instruments. ReqID: " + std::to_string(req) + "; Return: "_s + std::to_string(ret));
-        performed(req, ret);
+        performed(op_ref, req, ret);
     }
     void OnRspUnSubMarketData(
         CThostFtdcSpecificInstrumentField *pSpecificInstrument, 
@@ -185,8 +186,11 @@ private:
         }
     }
 
-    inline void performed(int req_id, int err) {
-        send(MDMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}});
+    inline void performed(const string& op_ref, int req_id, int err) {
+        send(MDMsgCode::PERFORMED, 
+            {{"code", err}}, 
+            {{"req_id", req_id}, {"op_ref", op_ref}}
+        );
     }
 
     inline void send(json&& data) {

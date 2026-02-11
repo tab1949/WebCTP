@@ -20,7 +20,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
             return "Error: Field \"port\" not found.";
         if (!j["port"].is_string())
             return "Error: Field \"port\" type error (expected string).";
-        md.connect(string(j["addr"]), string(j["port"]));
+        md.connect(string(j["op_ref"]), string(j["addr"]), string(j["port"]));
         return "";
     }},
     {"login", [](cjr j, mdr md) {
@@ -36,7 +36,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
             return "Error: Field \"password\" not found.";
         if (!j["password"].is_string())
             return "Error: Field \"password\" type error (expected string).";
-        md.login(string(j["broker_id"]).c_str(), string(j["user_id"]).c_str(), string(j["password"]).c_str());
+        md.login(string(j["op_ref"]), string(j["broker_id"]).c_str(), string(j["user_id"]).c_str(), string(j["password"]).c_str());
         return "";
     }},
     {"logout", [](cjr j, mdr md) {
@@ -56,7 +56,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
             return "Error: Field \"instruments\" not found.";
         if (!j["instruments"].is_array())
             return "Error: \"instruments\" is not an array.";
-        md.subscribe(j["instruments"]);
+        md.subscribe(string(j["op_ref"]), j["instruments"]);
         return "";
     }},
     {"unsubscribe", [](cjr j, mdr md) {
@@ -64,11 +64,11 @@ const std::unordered_map<std::string, std::function<std::string(cjr, mdr)>> map_
             return "Error: Field \"instruments\" not found.";
         if (!j["instruments"].is_array())
             return "Error: \"instruments\" is not an array.";
-        md.unsubscribe(j["instruments"]);
+        md.unsubscribe(string(j["op_ref"]), j["instruments"]);
         return "";
     }},
     {"get_trading_day", [](cjr j, mdr md){
-        md.getTradingDay();
+        md.getTradingDay(string(j["op_ref"]));
         return "";
     }}
 };
@@ -83,6 +83,10 @@ string HandleMarketDataMessage(cjr j, mdr md) {
         return "Error: Field `data` not found.";
     if (!j["data"].is_object())
         return "Error: Field `data` type error (expected object).";
+    if (!j["data"].contains("op_ref"))
+        return "Error: Field `data.op_ref` not found.";
+    if (!j["data"]["op_ref"].is_string())
+        return "Error: Field `data.op_ref` type error (expected string).";
     return map_md.at(operation)(j["data"], md);
 }
 
@@ -96,23 +100,23 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"port\" not found.";
         if (!j["port"].is_string())
             return "Error: Field \"port\" type error (expected string).";
-        t.connect(j["addr"], j["port"]);
+        t.connect(j["op_ref"], j["addr"], j["port"]);
         return "";
     }},
     {"get_trading_day", [](cjr j, thr t) {
-        t.getTradingDay();
+        t.getTradingDay(j["op_ref"]);
         return "";
     }},
     {"set", [](cjr j, thr t) {
         if (j.contains("broker_id")) {
             if (j["broker_id"].is_string())
-                t.setBrokerID(j["broker_id"]);
+                t.setBrokerID(j["op_ref"], j["broker_id"]);
             else
                 return "Error: Field \"broker_id\" type error (expected string).";
         }
         if (j.contains("investor_id")) {
             if (j["investor_id"].is_string())
-                t.setInvestorID(j["investor_id"]);
+                t.setInvestorID(j["op_ref"], j["investor_id"]);
             else
                 return "Error: Field \"investor_id\" type error (expected string).";
         }
@@ -131,7 +135,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"auth_code\" not found.";
         if (!j["auth_code"].is_string())
             return "Error: Field \"auth_code\" type error (expected string).";
-        t.auth(j["user_id"], j["app_id"], j["auth_code"]);
+        t.auth(j["op_ref"], j["user_id"], j["app_id"], j["auth_code"]);
         return "";
     }},
     {"login", [](cjr j, thr t) {
@@ -143,7 +147,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"password\" not found.";
         if (!j["password"].is_string())
             return "Error: Field \"password\" type error (expected string).";
-        t.login(j["user_id"], j["password"]);
+        t.login(j["op_ref"], j["user_id"], j["password"]);
         return "";
     }},
     {"logout", [](cjr j, thr t) {
@@ -151,7 +155,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"user_id\" not found.";
         if (!j["user_id"].is_string())
             return "Error: Field \"user_id\" type error (expected string).";
-        t.logout(j["user_id"]);
+        t.logout(j["op_ref"], j["user_id"]);
         return "";
     }},
     {"query_settlement_info", [](cjr j, thr t) {
@@ -159,15 +163,15 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field \"trading_day\" not found.";
         if (!j["trading_day"].is_string())
             return "Error: Field \"trading_day\" type error (expected string).";
-        t.querySettlementInfo(j["trading_day"]);
+        t.querySettlementInfo(j["op_ref"], j["trading_day"]);
         return "";
     }},
     {"confirm_settlement_info", [](cjr j, thr t) {
-        t.confirmSettlementInfo();
+        t.confirmSettlementInfo(j["op_ref"]);
         return "";
     }},
     {"query_trading_account", [](cjr j, thr t) {
-        t.queryTradingAccount();
+        t.queryTradingAccount(j["op_ref"]);
         return "";
     }},
     {"insert_order", [](cjr j, thr t) {
@@ -221,6 +225,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
                     return "Error: Field \"memo\" type error (expected string).";
             }
             t.insertOrder(
+                j["op_ref"],
                 j["instrument"], j["exchange"], j["ref"], 
                 j["price"], j["direction"], j["offset"], j["volume"],
                 j["price_type"], j["time_condition"], j.contains("memo")? j["memo"]: "");
@@ -234,22 +239,22 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
         if (j.contains("order_sys_id")) {
             if (!j["order_sys_id"].is_string())
                 return "Error: Field \"order_sys_id\" type error (expected string).";
-            t.queryOrderByID(j["order_sys_id"]);
+            t.queryOrderByID(j["op_ref"], j["order_sys_id"]);
         }
         else if (j.contains("exchange_id")) {
             if (!j["exchange_id"].is_string())
                 return "Error: Field \"exchange_id\" type error (expected string).";
-            t.queryOrderByExchange(j["exchange_id"]);
+            t.queryOrderByExchange(j["op_ref"], j["exchange_id"]);
         }
         else if (j.contains("from") && j.contains("to")) {
             if (!j["from"].is_string())
                 return "Error: Field \"from\" type error (expected string).";
             if (!j["to"].is_string())
                 return "Error: Field \"to\" type error (expected string).";
-            t.queryOrderByRange(j["from"], j["to"]);
+            t.queryOrderByRange(j["op_ref"], j["from"], j["to"]);
         }
         else
-            t.queryOrder();
+            t.queryOrder(j["op_ref"]);
         return "";
     }},
     {"delete_order", [](cjr j, thr t) {
@@ -269,7 +274,7 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
             return "Error: Field `order_sys_id` not found.";
         if (!j["order_sys_id"].is_string())
             return "Error: Field `order_sys_id` type error (expected string).";
-        t.deleteOrder(j["exchange"], j["instrument"], j["delete_ref"], j["order_sys_id"]);
+        t.deleteOrder(j["op_ref"], j["exchange"], j["instrument"], j["delete_ref"], j["order_sys_id"]);
         return "";
     }},
     {"query_instrument", [](cjr j, thr t) {
@@ -285,22 +290,22 @@ const std::unordered_map<std::string, std::function<std::string(cjr, thr)>> map_
                     if (j.contains("product_id")) {
                         if (!j["product_id"].is_string())
                             return "Error: Field \"product_id\" type error (expected string).";
-                        t.queryInstrument(j["exchange"], j["instrument"], j["exchange_inst_id"], j["product_id"]);
+                        t.queryInstrument(j["op_ref"], j["exchange"], j["instrument"], j["exchange_inst_id"], j["product_id"]);
                     }
                     else {
-                        t.queryInstrument(j["exchange"], j["instrument"], j["exchange_inst_id"]);
+                        t.queryInstrument(j["op_ref"], j["exchange"], j["instrument"], j["exchange_inst_id"]);
                     }
                 }
                 else {
-                    t.queryInstrument(j["exchange"], j["instrument"]);
+                    t.queryInstrument(j["op_ref"], j["exchange"], j["instrument"]);
                 }
             }
             else {
-                t.queryInstrument(j["exchange"]);
+                t.queryInstrument(j["op_ref"], j["exchange"]);
             }
         }
         else {
-            t.queryInstrument();
+            t.queryInstrument(j["op_ref"]);
         }
         return "";
     }}
@@ -314,6 +319,10 @@ string HandleTraderMessage(const json& msg, TraderHandler& trader) {
         return "Error: Field `data` not found.";
     if (!msg["data"].is_object())
         return "Error: Field `data` type error (expected object).";
+    if (!msg["data"].contains("op_ref"))
+        return "Error: Field `data.op_ref` not found.";
+    if (!msg["data"]["op_ref"].is_string())
+        return "Error: Field `data.op_ref` type error (expected string).";
     if (map_trader.find(operation) != map_trader.end())
         return map_trader.at(operation)(msg["data"], trader);
     else

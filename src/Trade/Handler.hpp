@@ -33,31 +33,32 @@ public:
 
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void connect(const string& addr, const string& port);
+    void connect(const string& op_ref, const string& addr, const string& port);
     void OnFrontConnected() override;
     void OnFrontDisconnected(int nReason) override;
 
-    void setBrokerID(const std::string& broker_id);
-    void setInvestorID(const std::string& investor_id);
+    void setBrokerID(const string& op_ref, const std::string& broker_id);
+    void setInvestorID(const string& op_ref, const std::string& investor_id);
 
-    void getTradingDay();
+    void getTradingDay(const string& op_ref);
 
-    void auth(const string& user_id, const string& app_id, const string& auth_code);
+    void auth(const string& op_ref, const string& user_id, const string& app_id, const string& auth_code);
     void OnRspAuthenticate(
         CThostFtdcRspAuthenticateField *pRspAuthenticateField, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void login(const std::string& user_id, const std::string& password);
+    void login(const string& op_ref, const std::string& user_id, const std::string& password);
     void OnRspUserLogin(
         CThostFtdcRspUserLoginField *pRspUserLogin, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void logout(const std::string& user_id);
+    void logout(const string& op_ref, const std::string& user_id);
     void OnRspUserLogout(
         CThostFtdcUserLogoutField *pUserLogout, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void querySettlementInfo(
+        const string& op_ref, 
         const string& trading_day,
         const string& account_id = "", 
         const string& currency_id = "");
@@ -66,6 +67,7 @@ public:
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void confirmSettlementInfo(
+        const string& op_ref, 
         const string& confirm_date = "",
         const string& confirm_time = "",
         int settlement_id = 0,
@@ -76,6 +78,7 @@ public:
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void queryTradingAccount(
+        const string& op_ref, 
         const string& account_id = "",
         const string& currency_id = "CNY",
         char biz_type = THOST_FTDC_BZTP_Future);
@@ -84,32 +87,37 @@ public:
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
     void insertOrder(
-        const string& instrument, const string& exchange,
+        const string& op_ref, 
+        const string& instrument, 
+        const string& exchange,
         const string& ref,
-        double price, Direction direction, 
-        OrderOffset offset, int volume, 
-        OrderPriceType price_type, TimeCondition time_condition,
-        const string& memo = "",
+        double price, 
+        Direction direction, 
+        OrderOffset offset, 
+        int volume, 
+        OrderPriceType price_type, 
+        TimeCondition time_condition,
+        const string& memo,
         Hedge hedge = Hedge::SPECULATION);
     void OnRspOrderInsert(CThostFtdcInputOrderField*, CThostFtdcRspInfoField*, int, bool) override;
     void OnErrRtnOrderInsert(CThostFtdcInputOrderField*, CThostFtdcRspInfoField*) override;
     void OnRtnOrder(CThostFtdcOrderField*) override;
     void OnRtnTrade(CThostFtdcTradeField*) override;
 
-    void queryOrder();
-    void queryOrderByID(const string& sysID);
-    void queryOrderByExchange(const string& ex);
-    void queryOrderByRange(const string& from, const string& to);
+    void queryOrder(const string& op_ref);
+    void queryOrderByID(const string& op_ref, const string& sysID);
+    void queryOrderByExchange(const string& op_ref, const string& ex);
+    void queryOrderByRange(const string& op_ref, const string& from, const string& to);
     void OnRspQryOrder(
         CThostFtdcOrderField *pOrder, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
 
-    void deleteOrder(const string& exchange, const string& instrument, int delRef, const string& sysID);
+    void deleteOrder(const string& op_ref, const string& exchange, const string& instrument, int delRef, const string& sysID);
     void OnRspOrderAction(CThostFtdcInputOrderActionField*, CThostFtdcRspInfoField*, int, bool) override;
     void OnErrRtnOrderAction(CThostFtdcOrderActionField*, CThostFtdcRspInfoField*) override;
-    // OnRtnOrder() is defined
+    // OnRtnOrder() is already defined
 
-    void queryInstrument(const string& exchange = "", const string& instrument = "", const string& exchange_inst_id = "", const string& product_id = "");
+    void queryInstrument(const string& op_ref, const string& exchange = "", const string& instrument = "", const string& exchange_inst_id = "", const string& product_id = "");
     void OnRspQryInstrument(
         CThostFtdcInstrumentField *pInstrument, 
         CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast) override;
@@ -151,8 +159,11 @@ private:
         }
     }
 
-    inline void performed(int req_id, int err, const string& msg = "") {
-        send(TradeMsgCode::PERFORMED, {{"code", err}}, {{"req_id", req_id}, {"msg", msg}});
+    inline void performed(const string& op_ref, int req_id, int err, const string& msg = "") {
+        send(TradeMsgCode::PERFORMED, 
+            {{"code", err}}, 
+            {{"op_ref", op_ref}, {"req_id", req_id}, {"msg", msg}}
+        );
     }
 
     inline void send(json&& data) {

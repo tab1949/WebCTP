@@ -15,6 +15,56 @@ const md = new CTP.MarketData(config.client.broker_id, config.client.user_id);
 const trade = new CTP.Trade(config.client.broker_id, config.client.user_id);
 let trading_day: string = '';
 
+const MARKET_DATA_DIR = '/var/lib/webctp/record';
+const MARKET_DATA_HEADER = 'TradingDay,InstrumentID,UpdateTime,UpdateMillisec,LastPrice,Volume,BidPrice1,BidVolume1,AskPrice1,AskVolume1,AveragePrice,Turnover,OpenInterest,UpperLimitPrice,LowerLimitPrice\n';
+const marketDataBuffer: string[] = [];
+let marketDataFlushInterval: NodeJS.Timeout;
+
+const getMarketDataFilePath = () => {
+    const dayFolder = trading_day || 'unknown';
+    return `${MARKET_DATA_DIR}/${dayFolder}/market.csv`;
+};
+
+const flushMarketData = () => {
+    if (marketDataBuffer.length === 0) {
+        return;
+    }
+
+    const dataToWrite = marketDataBuffer.join('');
+    marketDataBuffer.length = 0;
+
+    const filePath = getMarketDataFilePath();
+    ensureDir(`${MARKET_DATA_DIR}/${trading_day || 'unknown'}`);
+
+    try {
+        if (!fs.existsSync(filePath)) {
+            fs.writeFileSync(filePath, MARKET_DATA_HEADER, 'utf8');
+        }
+        fs.appendFile(filePath, dataToWrite, 'utf8', (err) => {
+            if (err) {
+                logger.error('Async flush market data error:', err);
+            }
+        });
+    } catch (e) {
+        logger.error('Flush market data setup error:', e);
+    }
+};
+
+const startMarketDataFlushLoop = () => {
+    marketDataFlushInterval = setInterval(flushMarketData, 1000);
+    if (marketDataFlushInterval?.unref) {
+        marketDataFlushInterval.unref();
+    }
+};
+
+const stopMarketDataFlushLoop = () => {
+    if (marketDataFlushInterval) {
+        clearInterval(marketDataFlushInterval);
+        marketDataFlushInterval = undefined as unknown as NodeJS.Timeout;
+    }
+    flushMarketData();
+};
+
 // Setup logger
 try { 
     if (!fs.existsSync('/var/lib/webctp/logs')) {
@@ -96,15 +146,8 @@ md.onLogin = safeFunc((d) => {
 });
 
 md.onMarketData = safeFunc((d) => {
-    const filename = `/var/lib/webctp/record/${d.TradingDay}/${d.InstrumentID}.csv`;
-    try {
-        if (!fs.existsSync(filename))
-            fs.writeFileSync(filename, "TradingDay,InstrumentID,UpdateTime,UpdateMillisec,LastPrice,Volume,BidPrice1,BidVolume1,AskPrice1,AskVolume1,AveragePrice,Turnover,OpenInterest,UpperLimitPrice,LowerLimitPrice\n");
-        fs.appendFile(filename, `${d.TradingDay},${d.InstrumentID},${d.UpdateTime},${d.UpdateMillisec},${d.LastPrice.toFixed(3)},${d.Volume},${d.BidPrice1.toFixed(3)},${d.BidVolume1},${d.AskPrice1.toFixed(3)},${d.AskVolume1},${d.AveragePrice.toFixed(3)},${d.Turnover},${d.OpenInterest},${d.UpperLimitPrice.toFixed(3)},${d.LowerLimitPrice.toFixed(3)}\n`, ()=>{});
-    }
-    catch(e) {
-        logger.error(`Write file ${filename} failed, exception:`, e);
-    }
+    const line = `${d.TradingDay},${d.InstrumentID},${d.UpdateTime},${d.UpdateMillisec},${d.LastPrice.toFixed(3)},${d.Volume},${d.BidPrice1.toFixed(3)},${d.BidVolume1},${d.AskPrice1.toFixed(3)},${d.AskVolume1},${d.AveragePrice.toFixed(3)},${d.Turnover},${d.OpenInterest},${d.UpperLimitPrice.toFixed(3)},${d.LowerLimitPrice.toFixed(3)}\n`;
+    marketDataBuffer.push(line);
 });
 
 trade.onPerformed = safeFunc((d) => {
@@ -215,7 +258,8 @@ const instruments: string[] = [];
 
 trade.onQueryInstrument = safeFunc((data) => {
     try {
-        if (data.UnderlyingInstrID.length <= 2 && data.InstrumentID)
+        // if (data.UnderlyingInstrID.length <= 2 && data.InstrumentID)
+        if (data.InstrumentID)
             instruments.push(data.InstrumentID);
         if (data.IsLast) {
             instruments.forEach((v) => {
@@ -233,23 +277,23 @@ trade.onQueryInstrument = safeFunc((data) => {
 });
 
 const stop = () => {
-    try { 
-        trade.logout("", config.client.user_id); 
+    try {
+        trade.logout("", config.client.user_id);
     } catch (e) { logger.error('trade.logout error:', e); }
 
-    try { 
-        trade.disconnect(); 
+    try {
+        trade.disconnect();
     } catch (e) { logger.error('trade.disconnect error:', e); }
-    try { 
-        md.disconnect(); 
+    try {
+        md.disconnect();
     } catch (e) { logger.error('md.disconnect error:', e); }
-    
-    log4js.shutdown(() => {
-        logger.info('Logger shutdown failed.');
-        process.exit(1);
-    });
 
-    process.exit(0);
+    stopMarketDataFlushLoop();
+
+    log4js.shutdown(() => {
+        logger.info('Logger shutdown complete.');
+        process.exit(0);
+    });
 };
 
 const connect = () => {
@@ -264,6 +308,10 @@ const connect = () => {
 
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
-process.on('exit', () => log4js.shutdown());
+process.on('exit', () => {
+    stopMarketDataFlushLoop();
+    log4js.shutdown();
+});
 
+startMarketDataFlushLoop();
 connect();

@@ -26,6 +26,7 @@ mkdir -p "$INSTALL_ROOT/examples/recorder"
 mkdir -p "$INSTALL_ROOT/src"
 cp -r examples/recorder/record.ts $INSTALL_ROOT/examples/recorder/record.ts
 cp examples/recorder/test.config.local.json $INSTALL_ROOT/examples/recorder/test.config.local.json
+cp examples/recorder/sort.py $INSTALL_ROOT/examples/recorder/sort.py
 cp -r src $INSTALL_ROOT/
 cp package.json $INSTALL_ROOT/package.json
 cp tsconfig.json $INSTALL_ROOT/tsconfig.json

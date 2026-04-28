@@ -260,6 +260,7 @@ trade.onSettlementInfoConfirm = safeFunc((data) => {
 const instruments: string[] = [];
 const SUBSCRIBE_BATCH_SIZE = 500;
 const SUBSCRIBE_BATCH_DELAY_MS = 1000;
+let subscribed = false;
 
 const subscribeInBatches = (items: string[]) => {
     const batches: string[][] = [];
@@ -285,7 +286,8 @@ trade.onQueryInstrument = safeFunc((data) => {
     try {
         if (data.InstrumentID)
             instruments.push(data.InstrumentID);
-        if (data.IsLast) {
+        if (data.IsLast && !subscribed) {
+            subscribed = true;
             subscribeInBatches(instruments);
             instruments.length = 0;
         }

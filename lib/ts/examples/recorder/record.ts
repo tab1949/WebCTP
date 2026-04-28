@@ -143,6 +143,11 @@ md.onFrontConnected = safeFunc((d) => {
 
 md.onLogin = safeFunc((d) => {
     logger.info("MarketData Login.");
+    try { 
+        trade.queryInstrument(""); 
+    } catch (e) { 
+        logger.error('queryInstrument error:', e); 
+    }
 });
 
 md.onMarketData = safeFunc((d) => {
@@ -248,31 +253,44 @@ trade.onSettlementInfoConfirm = safeFunc((data) => {
     if (data.IsLast)
         logger.info(`Settlement info confirmed. Confirm date: ${data.ConfirmDate}, time: ${data.ConfirmTime}`);
     try { 
-        trade.queryInstrument(""); 
-    } catch (e) { 
-        logger.error('queryInstrument error:', e); 
-    }
+        md.connect(config.webctp.addr, config.webctp.port); 
+    } catch (e) { logger.error('md.connect error:', e); }
 });
 
 const instruments: string[] = [];
+const SUBSCRIBE_BATCH_SIZE = 500;
+const SUBSCRIBE_BATCH_DELAY_MS = 1000;
+
+const subscribeInBatches = (items: string[]) => {
+    const batches: string[][] = [];
+    for (let i = 0; i < items.length; i += SUBSCRIBE_BATCH_SIZE) {
+        batches.push(items.slice(i, i + SUBSCRIBE_BATCH_SIZE));
+    }
+
+    batches.forEach((batch, index) => {
+        setTimeout(() => {
+            batch.forEach((instrumentId) => {
+                try {
+                    md.subscribe("", [instrumentId]);
+                } catch (e) {
+                    logger.error('md.subscribe error:', instrumentId, e);
+                }
+            });
+            logger.info(`Subscribed batch ${index + 1}/${batches.length} (${batch.length} instruments)`);
+        }, index * SUBSCRIBE_BATCH_DELAY_MS);
+    });
+};
 
 trade.onQueryInstrument = safeFunc((data) => {
     try {
-        // if (data.UnderlyingInstrID.length <= 2 && data.InstrumentID)
         if (data.InstrumentID)
             instruments.push(data.InstrumentID);
         if (data.IsLast) {
-            instruments.forEach((v) => {
-                try { 
-                    md.subscribe("", [v]); 
-                } catch (e) { 
-                    logger.error('md.subscribe error:', v, e); 
-                }
-            });
+            subscribeInBatches(instruments);
             instruments.length = 0;
         }
-    } catch (e) { 
-        logger.error('onQueryInstrument error:', e); 
+    } catch (e) {
+        logger.error('onQueryInstrument error:', e);
     }
 });
 
@@ -300,10 +318,6 @@ const connect = () => {
     try { 
         trade.connect(config.webctp.addr, config.webctp.port); 
     } catch (e) { logger.error('trade.connect error:', e); }
-
-    try { 
-        md.connect(config.webctp.addr, config.webctp.port); 
-    } catch (e) { logger.error('md.connect error:', e); }
 };
 
 process.on('SIGINT', stop);

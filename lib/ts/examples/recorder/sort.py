@@ -21,13 +21,13 @@ def ensure_dir(path: Path):
     path.mkdir(parents=True, exist_ok=True)
 
 
-def write_row(path: Path, row: str):
+def write_rows(path: Path, rows: list[str]):
     ensure_dir(path.parent)
     write_header = not path.exists()
     with path.open('a', encoding='utf-8', newline='') as handle:
         if write_header:
             handle.write(HEADER + '\n')
-        handle.write(row + '\n')
+        handle.writelines(rows)
 
 
 def process_market_file(source_path: Path):
@@ -35,23 +35,30 @@ def process_market_file(source_path: Path):
         header = source.readline()
         if not header:
             return
+        while True:
+            lines = source.readlines(1000000)
+            if len(lines) == 0:
+                break
+            tasks: dict[Path, list[str]] = {}
+            for line in lines:
+                if not line.strip():
+                    continue
 
-        for line in source:
-            if not line.strip():
-                continue
+                columns = line.split(',')
+                if len(columns) < 2:
+                    continue
 
-            row = line.rstrip('\r\n')
-            columns = row.split(',')
-            if len(columns) < 2:
-                continue
+                instrument_id = columns[1].strip()
+                if not instrument_id:
+                    continue
 
-            instrument_id = columns[1].strip()
-            if not instrument_id:
-                continue
-
-            category, filename_key = categorize(instrument_id)
-            output_path = source_path.parent / category / f'{filename_key}.csv'
-            write_row(output_path, row)
+                category, filename_key = categorize(instrument_id)
+                output_path = source_path.parent / category / f'{filename_key}.csv'
+                if tasks.get(output_path) == None:
+                    tasks[output_path] = []
+                tasks[output_path].append(line)
+            for path in tasks.keys():
+                write_rows(path, tasks[path])
 
 
 def main():

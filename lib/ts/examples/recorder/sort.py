@@ -21,20 +21,16 @@ def ensure_dir(path: Path):
     path.mkdir(parents=True, exist_ok=True)
 
 
-def open_output_file(path: Path, file_handles: dict):
-    if path in file_handles:
-        return file_handles[path]
-
+def write_row(path: Path, row: str):
     ensure_dir(path.parent)
     write_header = not path.exists()
-    handle = path.open('a', encoding='utf-8', newline='')
-    if write_header:
-        handle.write(HEADER + '\n')
-    file_handles[path] = handle
-    return handle
+    with path.open('a', encoding='utf-8', newline='') as handle:
+        if write_header:
+            handle.write(HEADER + '\n')
+        handle.write(row + '\n')
 
 
-def process_market_file(source_path: Path, file_handles: dict):
+def process_market_file(source_path: Path):
     with source_path.open('r', encoding='utf-8', newline='') as source:
         header = source.readline()
         if not header:
@@ -55,35 +51,23 @@ def process_market_file(source_path: Path, file_handles: dict):
 
             category, filename_key = categorize(instrument_id)
             output_path = source_path.parent / category / f'{filename_key}.csv'
-            open_output_file(output_path, file_handles).write(row + '\n')
-
-
-def close_file_handles(file_handles: dict):
-    for handle in file_handles.values():
-        try:
-            handle.close()
-        except Exception:
-            pass
+            write_row(output_path, row)
 
 
 def main():
     if not BASE_DIR.exists() or not BASE_DIR.is_dir():
         return
 
-    file_handles = {}
     source_paths: list[Path] = []
-    try:
-        for source_path in sorted(BASE_DIR.glob('*/market.csv')):
-            if source_path.is_file():
-                source_paths.append(source_path)
-                process_market_file(source_path, file_handles)
-    finally:
-        close_file_handles(file_handles)
-        for path in source_paths:
-            try:
-                path.unlink()
-            except Exception:
-                pass
+    for source_path in sorted(BASE_DIR.glob('*/market.csv')):
+        if source_path.is_file():
+            source_paths.append(source_path)
+            process_market_file(source_path)
+    for path in source_paths:
+        try:
+            path.unlink()
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':
